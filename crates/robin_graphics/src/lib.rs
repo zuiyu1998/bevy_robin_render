@@ -2,15 +2,16 @@ extern crate alloc;
 
 pub mod core_2d;
 pub mod frame_graph;
+pub mod fullscreen_vertex_shader;
 pub mod schedule;
 
-use crate::{core_2d::Core2dPlugin, schedule::camera_driver};
-use bevy::{
-    app::{App, Plugin},
-    asset::embedded_asset,
-    core_pipeline::FullscreenShader,
-    render::{RenderApp, renderer::RenderGraph},
+use crate::{
+    core_2d::Core2dPlugin, fullscreen_vertex_shader::FullscreenShader, schedule::camera_driver,
 };
+
+use bevy_app::{App, Plugin};
+use bevy_asset::embedded_asset;
+use bevy_render::{RenderApp, renderer::RenderGraph};
 
 #[derive(Default)]
 pub struct CorePipelinePlugin;

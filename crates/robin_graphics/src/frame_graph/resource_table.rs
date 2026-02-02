@@ -5,7 +5,7 @@ use crate::frame_graph::{
     ResourceRelease, ResourceRequese, ResourceView, TransientResource, TransientResourceCache,
     TransientResourceCreator, VirtualResource,
 };
-use bevy::render::renderer::RenderDevice;
+use bevy_render::renderer::RenderDevice;
 
 #[derive(Default)]
 pub struct ResourceTable {

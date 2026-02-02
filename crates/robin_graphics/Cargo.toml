@@ -17,4 +17,11 @@ wgpu = { version = "28", default-features = false, features = [
     "fragile-send-sync-non-atomic-wasm",
 ] }
 
-bevy = { workspace = true,  features = ["bevy_render"]}
+bevy_render = { workspace = true }
+bevy_app = { workspace = true }
+bevy_camera = { workspace = true }
+bevy_asset = { workspace = true }
+bevy_ecs = { workspace = true }
+bevy_shader = { workspace = true }
+bevy_log = { workspace = true }
+bevy_platform= { workspace = true }

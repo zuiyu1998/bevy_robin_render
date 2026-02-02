@@ -7,7 +7,7 @@ use wgpu::{CommandBuffer, CommandEncoder, CommandEncoderDescriptor, RenderPipeli
 use crate::frame_graph::{
     PipelineContainer, ResourceRef, ResourceTable, ResourceView, TransientResource,
 };
-use bevy::render::renderer::RenderDevice;
+use bevy_render::renderer::RenderDevice;
 
 pub struct PassContext<'a> {
     render_device: &'a RenderDevice,

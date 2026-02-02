@@ -1,7 +1,7 @@
-use bevy::{
-    app::{App, Plugin},
-    camera::Camera2d,
-    render::{RenderApp, camera::CameraRenderGraph, extract_component::ExtractComponentPlugin},
+use bevy_app::{App, Plugin};
+use bevy_camera::Camera2d;
+use bevy_render::{
+    RenderApp, camera::CameraRenderGraph, extract_component::ExtractComponentPlugin,
 };
 
 use crate::schedule::Core2d;

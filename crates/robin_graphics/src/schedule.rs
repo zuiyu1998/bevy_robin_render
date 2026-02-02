@@ -1,18 +1,17 @@
-use bevy::{
-    camera::{ClearColor, NormalizedRenderTarget},
-    ecs::{
-        entity::{ContainsEntity, Entity},
-        schedule::{IntoScheduleConfigs, Schedule, ScheduleLabel, SystemSet},
-        world::World,
-    },
-    log::info_span,
-    platform::collections::HashSet,
-    render::{
-        camera::{ExtractedCamera, SortedCameras},
-        renderer::{CurrentView, PendingCommandBuffers, RenderDevice, RenderQueue},
-        view::ExtractedWindows,
-    },
+use bevy_camera::{ClearColor, NormalizedRenderTarget};
+use bevy_ecs::{
+    entity::{ContainsEntity, Entity},
+    schedule::{IntoScheduleConfigs, Schedule, ScheduleLabel, SystemSet},
+    world::World,
 };
+use bevy_log::info_span;
+use bevy_platform::collections::HashSet;
+use bevy_render::{
+    camera::{ExtractedCamera, SortedCameras},
+    renderer::{CurrentView, PendingCommandBuffers, RenderDevice, RenderQueue},
+    view::ExtractedWindows,
+};
+
 use wgpu::{
     CommandEncoderDescriptor, LoadOp, Operations, RenderPassColorAttachment, RenderPassDescriptor,
     StoreOp,
@@ -31,7 +30,7 @@ pub struct Core2d;
 impl Core2d {
     pub fn base_schedule() -> Schedule {
         use Core2dSystems::*;
-        use bevy::ecs::schedule::ScheduleBuildSettings;
+        use bevy_ecs::schedule::ScheduleBuildSettings;
 
         let mut schedule = Schedule::new(Self);
 
