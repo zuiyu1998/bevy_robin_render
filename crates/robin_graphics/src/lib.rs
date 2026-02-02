@@ -1,3 +1,9 @@
+extern crate alloc;
+
+mod frame_graph;
+
+pub use frame_graph::*;
+
 pub fn add(left: u64, right: u64) -> u64 {
     left + right
 }
