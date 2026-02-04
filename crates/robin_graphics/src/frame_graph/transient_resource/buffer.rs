@@ -48,6 +48,18 @@ pub struct TransientBufferDescriptor {
     pub mapped_at_creation: bool,
 }
 
+//todo update bevy
+impl Default for TransientBufferDescriptor {
+    fn default() -> Self {
+        TransientBufferDescriptor {
+            label: None,
+            size: 0,
+            usage: BufferUsages::all(),
+            mapped_at_creation: false,
+        }
+    }
+}
+
 impl TransientBufferDescriptor {
     pub fn from_init_desc(desc: &BufferInitDescriptor) -> Self {
         if desc.contents.is_empty() {

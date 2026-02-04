@@ -17,6 +17,11 @@ bevy_asset = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 bevy_shader = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 bevy_log = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 bevy_platform = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+bevy_derive = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+bevy_utils = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+bevy_material = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+bevy_material_macros = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+bevy_color = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 
 [dependencies]
 bevy_app = { workspace = true }

@@ -5,9 +5,23 @@ edition = "2024"
 
 [features]
 trace = []
-
+detailed_trace = []
 
 [dependencies]
+bevy_render = { workspace = true }
+bevy_app = { workspace = true }
+bevy_camera = { workspace = true }
+bevy_asset = { workspace = true }
+bevy_ecs = { workspace = true }
+bevy_shader = { workspace = true }
+bevy_log = { workspace = true }
+bevy_platform = { workspace = true }
+bevy_derive = { workspace = true }
+bevy_utils = { workspace = true }
+bevy_material = { workspace = true }
+bevy_material_macros = { workspace = true }
+bevy_color = { workspace = true }
+
 wgpu = { version = "28", default-features = false, features = [
     "wgsl",
     "dx12",
@@ -16,12 +30,8 @@ wgpu = { version = "28", default-features = false, features = [
     "naga-ir",
     "fragile-send-sync-non-atomic-wasm",
 ] }
-
-bevy_render = { workspace = true }
-bevy_app = { workspace = true }
-bevy_camera = { workspace = true }
-bevy_asset = { workspace = true }
-bevy_ecs = { workspace = true }
-bevy_shader = { workspace = true }
-bevy_log = { workspace = true }
-bevy_platform= { workspace = true }
+encase = "0.12"
+fixedbitset = { version = "0.5" }
+indexmap = { version = "2" }
+nonmax = "0.5"
+smallvec = { version = "1", default-features = false, features = ["const_new"] }

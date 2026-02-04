@@ -3,6 +3,7 @@ extern crate alloc;
 pub mod core_2d;
 pub mod frame_graph;
 pub mod fullscreen_vertex_shader;
+pub mod render_phase;
 pub mod schedule;
 
 use crate::{
@@ -28,20 +29,5 @@ impl Plugin for CorePipelinePlugin {
         render_app
             .init_resource::<FullscreenShader>()
             .add_systems(RenderGraph, camera_driver);
-    }
-}
-
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
     }
 }
