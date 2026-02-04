@@ -1,4 +1,4 @@
-use std::{mem::take, ops::Range};
+use core::{mem::take, ops::Range};
 
 use wgpu::{Color, IndexFormat, RenderPipeline};
 

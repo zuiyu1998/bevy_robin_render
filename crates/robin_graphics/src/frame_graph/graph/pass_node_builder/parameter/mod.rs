@@ -22,6 +22,7 @@ mod set_viewport_parameter;
 use crate::frame_graph::{
     RenderPass, RenderPassCommand, ResourceRead, ResourceRef, TransientBindGroup, TransientBuffer,
 };
+use core::ops::Range;
 use draw_indexed_indirect_parameter::*;
 use draw_indexed_parameter::*;
 use draw_indirect_parameter::*;
@@ -42,7 +43,6 @@ use set_scissor_rect_parameter::*;
 use set_stencil_reference_parameter::*;
 use set_vertex_buffer_parameter::*;
 use set_viewport_parameter::*;
-use std::ops::Range;
 use wgpu::{Color, IndexFormat, RenderPipeline};
 
 pub trait RenderPassExt {

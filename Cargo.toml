@@ -3,6 +3,15 @@ name = "bevy_robin_render"
 version = "0.1.0"
 edition = "2024"
 
+[package.metadata.docs.rs]
+rustc-args = ["--cfg", "docsrs_dep"]
+rustdoc-args = [
+    "--cfg",
+    "docsrs_dep",
+    "--html-after-content",
+    "docs-rs/trait-tags.html",
+]
+
 [features]
 
 [workspace]
@@ -22,6 +31,44 @@ bevy_utils = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 bevy_material = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 bevy_material_macros = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 bevy_color = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+bevy_math = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+bevy_encase_derive = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+bevy_tasks = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+
+[workspace.lints.clippy]
+manual_let_else = "warn"
+match_same_arms = "warn"
+redundant_closure_for_method_calls = "warn"
+redundant_else = "warn"
+semicolon_if_nothing_returned = "warn"
+type_complexity = "allow"
+undocumented_unsafe_blocks = "warn"
+unwrap_or_default = "warn"
+needless_lifetimes = "allow"
+too_many_arguments = "allow"
+nonstandard_macro_braces = "warn"
+print_stdout = "warn"
+print_stderr = "warn"
+
+ptr_as_ptr = "warn"
+ptr_cast_constness = "warn"
+ref_as_ptr = "warn"
+
+# see: https://github.com/bevyengine/bevy/pull/15375#issuecomment-2366966219
+too_long_first_doc_paragraph = "allow"
+
+std_instead_of_core = "warn"
+std_instead_of_alloc = "warn"
+alloc_instead_of_core = "warn"
+
+allow_attributes = "warn"
+allow_attributes_without_reason = "warn"
+
+[workspace.lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(docsrs_dep)'] }
+unsafe_code = "deny"
+unsafe_op_in_unsafe_fn = "warn"
+unused_qualifications = "warn"
 
 [dependencies]
 bevy_app = { workspace = true }
@@ -29,7 +76,9 @@ bevy_app = { workspace = true }
 robin_graphics = { path = "./crates/robin_graphics" }
 
 [dev-dependencies]
-bevy = { git = "https://github.com/bevyengine/bevy.git", branch = "main", features = ["debug"]}
+bevy = { git = "https://github.com/bevyengine/bevy.git", branch = "main", features = [
+    "debug",
+] }
 
 [[example]]
 name = "2d_shapes"

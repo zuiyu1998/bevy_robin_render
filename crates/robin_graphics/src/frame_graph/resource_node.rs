@@ -10,7 +10,7 @@ pub struct ResourceRef<ResourceType: TransientResource, VieType> {
 }
 
 impl<ResourceType: TransientResource, VieType> Debug for ResourceRef<ResourceType, VieType> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("ResourceRef")
             .field("raw", &self.raw)
             .finish()

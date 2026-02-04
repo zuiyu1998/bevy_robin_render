@@ -7,7 +7,7 @@ pub use device_pass::*;
 pub use pass_node_builder::*;
 pub use resource_board::*;
 
-use std::sync::Arc;
+use alloc::sync::Arc;
 use wgpu::CommandBuffer;
 
 use crate::frame_graph::{

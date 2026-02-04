@@ -1,5 +1,6 @@
 extern crate alloc;
 
+pub mod batching;
 pub mod core_2d;
 pub mod frame_graph;
 pub mod fullscreen_vertex_shader;

@@ -3,9 +3,24 @@ name = "robin_graphics"
 version = "0.1.0"
 edition = "2024"
 
+[package.metadata.docs.rs]
+rustc-args = ["--cfg", "docsrs_dep"]
+rustdoc-args = [
+    "--cfg",
+    "docsrs_dep",
+    "--html-after-content",
+    "docs-rs/trait-tags.html",
+]
+
+[lints]
+workspace = true
+
 [features]
 trace = []
 detailed_trace = []
+
+[dev-dependencies]
+proptest = "1"
 
 [dependencies]
 bevy_render = { workspace = true }
@@ -21,6 +36,9 @@ bevy_utils = { workspace = true }
 bevy_material = { workspace = true }
 bevy_material_macros = { workspace = true }
 bevy_color = { workspace = true }
+bevy_math = { workspace = true }
+bevy_encase_derive = { workspace = true }
+bevy_tasks = { workspace = true }
 
 wgpu = { version = "28", default-features = false, features = [
     "wgsl",
@@ -35,3 +53,6 @@ fixedbitset = { version = "0.5" }
 indexmap = { version = "2" }
 nonmax = "0.5"
 smallvec = { version = "1", default-features = false, features = ["const_new"] }
+thiserror = { version = "1.0" }
+variadics_please = "1.1"
+bytemuck = { version = "1.5", features = ["derive", "must_cast"] }

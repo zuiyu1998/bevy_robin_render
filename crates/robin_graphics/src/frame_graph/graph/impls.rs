@@ -1,4 +1,5 @@
-use std::{ops::Deref, sync::Arc};
+use alloc::sync::Arc;
+use core::ops::Deref;
 
 use bevy_render::render_resource::{Buffer, BufferSlice};
 
