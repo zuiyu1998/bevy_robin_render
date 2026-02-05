@@ -1,29 +1,39 @@
+mod main_opaque_pass_2d_node;
+
+pub use main_opaque_pass_2d_node::*;
+
 use core::ops::Range;
 
 use bevy_app::{App, Plugin};
 use bevy_asset::UntypedAssetId;
 use bevy_camera::{Camera, Camera2d};
 use bevy_ecs::prelude::*;
+use bevy_image::ToExtents;
 use bevy_math::FloatOrd;
-use bevy_platform::collections::HashSet;
+use bevy_platform::collections::{HashMap, HashSet};
 use bevy_render::{
-    Extract, ExtractSchedule, RenderApp,
-    camera::CameraRenderGraph,
+    Extract, ExtractSchedule, Render, RenderApp, RenderSystems,
+    camera::{CameraRenderGraph, ExtractedCamera},
     extract_component::ExtractComponentPlugin,
     render_resource::{BindGroupId, CachedRenderPipelineId},
+    renderer::RenderDevice,
     sync_world::MainEntity,
-    view::RetainedViewEntity,
+    texture::TextureCache,
+    view::{ExtractedView, Msaa, RetainedViewEntity, ViewDepthTexture},
 };
+use wgpu::{TextureDescriptor, TextureDimension, TextureFormat, TextureUsages};
 
 use crate::{
     batching::gpu_preprocessing::GpuPreprocessingMode,
     render_phase::{
         BinnedPhaseItem, CachedRenderPipelinePhaseItem, DrawFunctionId, DrawFunctions, PhaseItem,
         PhaseItemBatchSetKey, PhaseItemExtraIndex, SortedPhaseItem, ViewBinnedRenderPhases,
-        ViewSortedRenderPhases,
+        ViewSortedRenderPhases, sort_phase_system,
     },
     schedule::Core2d,
 };
+
+pub const CORE_2D_DEPTH_FORMAT: TextureFormat = TextureFormat::Depth32Float;
 
 pub struct Core2dPlugin;
 
@@ -45,7 +55,14 @@ impl Plugin for Core2dPlugin {
             .init_resource::<ViewSortedRenderPhases<Transparent2d>>()
             .init_resource::<ViewBinnedRenderPhases<Opaque2d>>()
             .init_resource::<ViewBinnedRenderPhases<AlphaMask2d>>()
-            .add_systems(ExtractSchedule, extract_core_2d_camera_phases);
+            .add_systems(ExtractSchedule, extract_core_2d_camera_phases)
+            .add_systems(
+                Render,
+                (
+                    sort_phase_system::<Transparent2d>.in_set(RenderSystems::PhaseSort),
+                    prepare_core_2d_depth_textures.in_set(RenderSystems::PrepareResources),
+                ),
+            );
     }
 }
 
@@ -370,4 +387,49 @@ pub fn extract_core_2d_camera_phases(
     transparent_2d_phases.retain(|camera_entity, _| live_entities.contains(camera_entity));
     opaque_2d_phases.retain(|camera_entity, _| live_entities.contains(camera_entity));
     alpha_mask_2d_phases.retain(|camera_entity, _| live_entities.contains(camera_entity));
+}
+
+pub fn prepare_core_2d_depth_textures(
+    mut commands: Commands,
+    mut texture_cache: ResMut<TextureCache>,
+    render_device: Res<RenderDevice>,
+    transparent_2d_phases: Res<ViewSortedRenderPhases<Transparent2d>>,
+    opaque_2d_phases: Res<ViewBinnedRenderPhases<Opaque2d>>,
+    views_2d: Query<(Entity, &ExtractedCamera, &ExtractedView, &Msaa), (With<Camera2d>,)>,
+) {
+    let mut textures = <HashMap<_, _>>::default();
+    for (view, camera, extracted_view, msaa) in &views_2d {
+        if !opaque_2d_phases.contains_key(&extracted_view.retained_view_entity)
+            || !transparent_2d_phases.contains_key(&extracted_view.retained_view_entity)
+        {
+            continue;
+        };
+
+        let Some(physical_target_size) = camera.physical_target_size else {
+            continue;
+        };
+
+        let cached_texture = textures
+            .entry(camera.target.clone())
+            .or_insert_with(|| {
+                let descriptor = TextureDescriptor {
+                    label: Some("view_depth_texture"),
+                    // The size of the depth texture
+                    size: physical_target_size.to_extents(),
+                    mip_level_count: 1,
+                    sample_count: msaa.samples(),
+                    dimension: TextureDimension::D2,
+                    format: CORE_2D_DEPTH_FORMAT,
+                    usage: TextureUsages::RENDER_ATTACHMENT,
+                    view_formats: &[],
+                };
+
+                texture_cache.get(&render_device, descriptor)
+            })
+            .clone();
+
+        commands
+            .entity(view)
+            .insert(ViewDepthTexture::new(cached_texture, Some(0.0)));
+    }
 }

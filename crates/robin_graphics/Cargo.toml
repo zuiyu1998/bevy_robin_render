@@ -39,6 +39,7 @@ bevy_color = { workspace = true }
 bevy_math = { workspace = true }
 bevy_encase_derive = { workspace = true }
 bevy_tasks = { workspace = true }
+bevy_image= { workspace = true }
 
 wgpu = { version = "28", default-features = false, features = [
     "wgsl",
@@ -57,3 +58,4 @@ thiserror = { version = "1.0" }
 variadics_please = "1.1"
 bytemuck = { version = "1.5", features = ["derive", "must_cast"] }
 radsort = "0.1"
+tracing = { version = "0.1", default-features = false, features = ["std"] }

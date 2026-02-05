@@ -34,6 +34,7 @@ bevy_color = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 bevy_math = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 bevy_encase_derive = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 bevy_tasks = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+bevy_image = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 
 [workspace.lints.clippy]
 manual_let_else = "warn"

@@ -4020,6 +4020,7 @@ dependencies = [
  "bevy_derive",
  "bevy_ecs",
  "bevy_encase_derive",
+ "bevy_image",
  "bevy_log",
  "bevy_material",
  "bevy_material_macros",
@@ -4038,6 +4039,7 @@ dependencies = [
  "radsort",
  "smallvec",
  "thiserror 1.0.69",
+ "tracing",
  "variadics_please",
  "wgpu",
 ]

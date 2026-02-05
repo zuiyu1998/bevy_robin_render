@@ -5,7 +5,7 @@ use wgpu::{Color, IndexFormat, RenderPipeline};
 use crate::frame_graph::{
     PassNodeBuilderExt, RenderPass, ResourceHandle, ResourceMaterial, ResourceRead, ResourceRef,
     ResourceWrite, TransientBindGroup, TransientBuffer, TransientRenderPassColorAttachment,
-    TransientResource,
+    TransientRenderPassDepthStencilAttachment, TransientResource,
 };
 
 use super::{PassBuilder, RenderPassExt};
@@ -236,6 +236,15 @@ impl<'a, 'b> RenderPassBuilder<'a, 'b> {
     ) -> &mut Self {
         self.render_pass
             .add_color_attachment(Some(color_attachment));
+        self
+    }
+
+    pub fn set_depth_stencil_attachment(
+        &mut self,
+        depth_stencil_attachment: TransientRenderPassDepthStencilAttachment,
+    ) -> &mut Self {
+        self.render_pass
+            .set_depth_stencil_attachment(Some(depth_stencil_attachment));
         self
     }
 
