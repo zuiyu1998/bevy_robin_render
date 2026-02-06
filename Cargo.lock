@@ -1039,6 +1039,7 @@ dependencies = [
  "bytemuck",
  "derive_more",
  "hexasphere",
+ "serde",
  "thiserror 2.0.18",
  "tracing",
  "wgpu-types",
@@ -2478,6 +2479,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "generator"
+version = "0.8.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "52f04ae4152da20c76fe800fa48659201d5cf627c5149ca0b707b69d7eef6cf9"
+dependencies = [
+ "cc",
+ "cfg-if",
+ "libc",
+ "log",
+ "rustversion",
+ "windows-link 0.2.1",
+ "windows-result 0.4.1",
+]
+
+[[package]]
 name = "gethostname"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3012,6 +3028,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 
 [[package]]
+name = "loom"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "419e0dc8046cb947daa77eb95ae174acfbddb7673b4151f56d1eed8e93fbfaca"
+dependencies = [
+ "cfg-if",
+ "generator",
+ "scoped-tls",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "mach-dxcompiler-rs"
+version = "0.1.4+2024.11.22-df583a3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e3cd67e8ea2ba061339150970542cf1c60ba44c6d17e31279cbc133a4b018f8"
+
+[[package]]
 name = "mach2"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3114,6 +3149,7 @@ dependencies = [
  "log",
  "num-traits",
  "once_cell",
+ "petgraph",
  "pp-rs",
  "rustc-hash 1.1.0",
  "spirv",
@@ -3789,6 +3825,20 @@ name = "profiling"
 version = "1.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3eb8486b569e12e2c32ad3e204dbaba5e4b5b216e9367044f25f1dba42341773"
+dependencies = [
+ "profiling-procmacros",
+ "tracing",
+]
+
+[[package]]
+name = "profiling-procmacros"
+version = "1.0.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "52717f9a02b6965224f95ca2a81e2e0c5c43baacd28ca057577988930b6c3d5b"
+dependencies = [
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "proptest"
@@ -4042,6 +4092,70 @@ dependencies = [
  "tracing",
  "variadics_please",
  "wgpu",
+]
+
+[[package]]
+name = "robin_render"
+version = "0.1.0"
+dependencies = [
+ "async-channel",
+ "bevy_app",
+ "bevy_asset",
+ "bevy_camera",
+ "bevy_color",
+ "bevy_derive",
+ "bevy_diagnostic",
+ "bevy_ecs",
+ "bevy_encase_derive",
+ "bevy_image",
+ "bevy_log",
+ "bevy_material",
+ "bevy_material_macros",
+ "bevy_math",
+ "bevy_mesh",
+ "bevy_platform",
+ "bevy_reflect",
+ "bevy_shader",
+ "bevy_tasks",
+ "bevy_time",
+ "bevy_transform",
+ "bevy_utils",
+ "bevy_window",
+ "bitflags 2.10.0",
+ "bytemuck",
+ "derive_more",
+ "downcast-rs 2.0.2",
+ "encase",
+ "fixedbitset",
+ "glam",
+ "image",
+ "indexmap",
+ "js-sys",
+ "naga",
+ "nonmax",
+ "offset-allocator",
+ "profiling",
+ "proptest",
+ "robin_render_macros",
+ "send_wrapper",
+ "smallvec",
+ "thiserror 2.0.18",
+ "tracy-client",
+ "variadics_please",
+ "wasm-bindgen",
+ "web-sys",
+ "wgpu",
+ "wgpu-types",
+]
+
+[[package]]
+name = "robin_render_macros"
+version = "0.19.0-dev"
+dependencies = [
+ "bevy_macro_utils",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -4685,6 +4799,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "tracy-client"
+version = "0.18.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4f6fc3baeac5d86ab90c772e9e30620fc653bf1864295029921a15ef478e6a5"
+dependencies = [
+ "loom",
+ "once_cell",
+ "tracy-client-sys",
+]
+
+[[package]]
+name = "tracy-client-sys"
+version = "0.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c5f7c95348f20c1c913d72157b3c6dee6ea3e30b3d19502c5a7f6d3f160dacbf"
+dependencies = [
+ "cc",
+ "windows-targets 0.52.6",
+]
+
+[[package]]
 name = "ttf-parser"
 version = "0.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5037,6 +5172,7 @@ dependencies = [
  "smallvec",
  "static_assertions",
  "wasm-bindgen",
+ "wasm-bindgen-futures",
  "web-sys",
  "wgpu-core",
  "wgpu-hal",
@@ -5069,6 +5205,7 @@ dependencies = [
  "smallvec",
  "thiserror 2.0.18",
  "wgpu-core-deps-apple",
+ "wgpu-core-deps-emscripten",
  "wgpu-core-deps-wasm",
  "wgpu-core-deps-windows-linux-android",
  "wgpu-hal",
@@ -5080,6 +5217,15 @@ name = "wgpu-core-deps-apple"
 version = "28.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "87b7b696b918f337c486bf93142454080a32a37832ba8a31e4f48221890047da"
+dependencies = [
+ "wgpu-hal",
+]
+
+[[package]]
+name = "wgpu-core-deps-emscripten"
+version = "28.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "34b251c331f84feac147de3c4aa3aa45112622a95dd7ee1b74384fa0458dbd79"
 dependencies = [
  "wgpu-hal",
 ]
@@ -5128,6 +5274,7 @@ dependencies = [
  "libc",
  "libloading",
  "log",
+ "mach-dxcompiler-rs",
  "metal",
  "naga",
  "ndk-sys 0.6.0+11769913",
