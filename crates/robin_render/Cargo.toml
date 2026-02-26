@@ -1,0 +1,7 @@
+[package]
+name = "robin_render"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy_app = { workspace = true }

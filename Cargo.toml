@@ -3,4 +3,10 @@ name = "bevy_robin_render"
 version = "0.1.0"
 edition = "2024"
 
+[workspace]
+members = ['.', './crates/robin_render']
+
+[workspace.dependencies]
+bevy_app = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+
 [dependencies]
