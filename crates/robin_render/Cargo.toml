@@ -5,3 +5,14 @@ edition = "2024"
 
 [dependencies]
 bevy_app = { workspace = true }
+bevy_ecs = { workspace = true }
+bevy_derive = { workspace = true }
+
+wgpu = { version = "28", default-features = false, features = [
+  "wgsl",
+  "dx12",
+  "metal",
+  "vulkan",
+  "naga-ir",
+  "fragile-send-sync-non-atomic-wasm",
+] }
