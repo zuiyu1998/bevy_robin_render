@@ -3,10 +3,21 @@ name = "robin_render"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+webgl = ["wgpu/webgl"]
+webgpu = ["wgpu/webgpu"]
+ci_limits = []
+statically-linked-dxc = ["wgpu/static-dxc"]
+raw_vulkan_init = ["wgpu/vulkan"]
+
 [dependencies]
 bevy_app = { workspace = true }
 bevy_ecs = { workspace = true }
 bevy_derive = { workspace = true }
+bevy_image = { workspace = true }
+bevy_window = { workspace = true }
+bevy_tasks = { workspace = true }
+bevy_log = { workspace = true }
 
 wgpu = { version = "28", default-features = false, features = [
   "wgsl",

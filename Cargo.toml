@@ -10,5 +10,9 @@ members = ['.', './crates/robin_render']
 bevy_app = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 bevy_ecs = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 bevy_derive = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+bevy_image = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+bevy_window = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+bevy_tasks = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+bevy_log = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 
 [dependencies]

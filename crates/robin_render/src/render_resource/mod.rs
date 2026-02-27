@@ -1,5 +1,5 @@
-mod wgpu_wrapper;
 mod render_device;
+mod wgpu_wrapper;
 
 pub use render_device::*;
 
