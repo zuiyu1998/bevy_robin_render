@@ -27,3 +27,5 @@ wgpu = { version = "28", default-features = false, features = [
   "naga-ir",
   "fragile-send-sync-non-atomic-wasm",
 ] }
+
+wgpu-types = { version = "28", default-features = false }

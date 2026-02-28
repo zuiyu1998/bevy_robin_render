@@ -1981,6 +1981,7 @@ dependencies = [
  "bevy_tasks",
  "bevy_window",
  "wgpu",
+ "wgpu-types",
 ]
 
 [[package]]
