@@ -14,5 +14,8 @@ bevy_image = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 bevy_window = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 bevy_tasks = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 bevy_log = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+bevy_platform = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+bevy_reflect = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+bevy_utils = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 
 [dependencies]
