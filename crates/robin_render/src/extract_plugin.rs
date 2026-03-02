@@ -1,9 +1,12 @@
-use crate::sync_world::{SyncWorldPlugin, entity_sync_system};
-use bevy_app::{App, InternedAppLabel, Plugin};
+use crate::{
+    sync_world::{despawn_temporary_render_entities, entity_sync_system, SyncWorldPlugin},
+    Render, RenderApp, RenderSystems,
+};
+use bevy_app::{App, Plugin, SubApp};
 use bevy_derive::{Deref, DerefMut};
 use bevy_ecs::{
     resource::Resource,
-    schedule::{Schedule, ScheduleBuildSettings, ScheduleLabel, Schedules},
+    schedule::{IntoScheduleConfigs, Schedule, ScheduleBuildSettings, ScheduleLabel, Schedules},
     world::{Mut, World},
 };
 use bevy_utils::default;
@@ -15,8 +18,14 @@ pub struct ExtractPlugin {
     ///
     /// Gets the main world and render world as arguments (in that order).
     pub pre_extract: fn(&mut World, &mut World),
+}
 
-    pub app_label: InternedAppLabel,
+impl Default for ExtractPlugin {
+    fn default() -> Self {
+        Self {
+            pre_extract: |_, _| {},
+        }
+    }
 }
 
 impl Plugin for ExtractPlugin {
@@ -24,34 +33,46 @@ impl Plugin for ExtractPlugin {
         app.add_plugins(SyncWorldPlugin);
         app.init_resource::<ScratchMainWorld>();
 
-        if let Some(render_app) = app.get_sub_app_mut(self.app_label) {
-            let mut extract_schedule = Schedule::new(ExtractSchedule);
-            // We skip applying any commands during the ExtractSchedule
-            // so commands can be applied on the render thread.
-            extract_schedule.set_build_settings(ScheduleBuildSettings {
-                auto_insert_apply_deferred: false,
-                ..default()
-            });
-            extract_schedule.set_apply_final_deferred(false);
+        let mut render_app = SubApp::new();
 
-            render_app
-                .add_schedule(extract_schedule)
-                .allow_ambiguous_resource::<MainWorld>();
+        let mut extract_schedule = Schedule::new(ExtractSchedule);
+        // We skip applying any commands during the ExtractSchedule
+        // so commands can be applied on the render thread.
+        extract_schedule.set_build_settings(ScheduleBuildSettings {
+            auto_insert_apply_deferred: false,
+            ..default()
+        });
+        extract_schedule.set_apply_final_deferred(false);
 
-            let pre_extract = self.pre_extract;
-            render_app.set_extract(move |main_world, render_world| {
-                pre_extract(main_world, render_world);
+        render_app
+            .add_schedule(Render::base_schedule())
+            .add_schedule(extract_schedule)
+            .allow_ambiguous_resource::<MainWorld>()
+            .add_systems(
+                Render,
+                (
+                    // This set applies the commands from the extract schedule while the render schedule
+                    // is running in parallel with the main app.
+                    apply_extract_commands.in_set(RenderSystems::ExtractCommands),
+                    despawn_temporary_render_entities.in_set(RenderSystems::PostCleanup),
+                ),
+            );
 
-                {
-                    #[cfg(feature = "trace")]
-                    let _stage_span = bevy_log::info_span!("entity_sync").entered();
-                    entity_sync_system(main_world, render_world);
-                }
+        let pre_extract = self.pre_extract;
+        render_app.set_extract(move |main_world, render_world| {
+            pre_extract(main_world, render_world);
 
-                // run extract schedule
-                extract(main_world, render_world);
-            });
-        }
+            {
+                #[cfg(feature = "trace")]
+                let _stage_span = bevy_log::info_span!("entity_sync").entered();
+                entity_sync_system(main_world, render_world);
+            }
+
+            // run extract schedule
+            extract(main_world, render_world);
+        });
+
+        app.insert_sub_app(RenderApp, render_app);
     }
 }
 
@@ -68,7 +89,7 @@ pub struct ExtractSchedule;
 /// Applies the commands from the extract schedule. This happens during
 /// the render schedule rather than during extraction to allow the commands to run in parallel with the
 /// main app when pipelined rendering is enabled.
-pub fn apply_extract_commands(render_world: &mut World) {
+fn apply_extract_commands(render_world: &mut World) {
     render_world.resource_scope(|render_world, mut schedules: Mut<Schedules>| {
         schedules
             .get_mut(ExtractSchedule)
@@ -110,11 +131,11 @@ mod test {
     use bevy_ecs::{prelude::*, schedule::ScheduleLabel};
 
     use crate::{
-        Render, RenderApp,
         extract_component::{ExtractComponent, ExtractComponentPlugin},
         extract_plugin::ExtractPlugin,
         sync_component::SyncComponent,
         sync_world::MainEntity,
+        Render, RenderApp,
     };
 
     #[derive(Component, Clone, Debug)]

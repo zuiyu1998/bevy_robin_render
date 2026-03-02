@@ -9,7 +9,8 @@ use wgpu_types::error::ErrorType;
 
 use crate::{
     insert_future_resources,
-    render_resource::{RenderDevice, WgpuWrapper, PipelineCache},
+    render_resource::PipelineCache,
+    renderer::{RenderDevice, WgpuWrapper},
     settings::RenderCreation,
     FutureRenderResources, RenderStartup,
 };
