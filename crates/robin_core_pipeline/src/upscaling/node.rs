@@ -1,7 +1,7 @@
 use crate::{blit::BlitPipeline, upscaling::ViewUpscalingPipeline};
 use bevy_camera::{CameraOutputMode, ClearColor, ClearColorConfig};
 use bevy_ecs::prelude::*;
-use bevy_render::{
+use robin_render::{
     camera::ExtractedCamera,
     diagnostic::RecordDiagnostics,
     render_resource::{BindGroup, PipelineCache, RenderPassDescriptor, TextureViewId},

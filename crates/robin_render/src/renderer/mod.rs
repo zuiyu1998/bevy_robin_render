@@ -21,8 +21,8 @@ use bevy_derive::{Deref, DerefMut};
 use bevy_ecs::schedule::ScheduleLabel;
 use bevy_ecs::{prelude::*, system::SystemState};
 use bevy_log::{debug, info, info_span, warn};
-use robin_render::camera::ExtractedCamera;
 use bevy_window::RawHandleWrapperHolder;
+use robin_render::camera::ExtractedCamera;
 use wgpu::{
     Adapter, AdapterInfo, Backends, DeviceType, Instance, Queue, RequestAdapterOptions, Trace,
 };

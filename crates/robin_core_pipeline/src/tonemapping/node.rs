@@ -1,7 +1,7 @@
 use crate::tonemapping::{TonemappingLuts, TonemappingPipeline, ViewTonemappingPipeline};
 
 use bevy_ecs::prelude::*;
-use bevy_render::{
+use robin_render::{
     diagnostic::RecordDiagnostics,
     render_asset::RenderAssets,
     render_resource::{
