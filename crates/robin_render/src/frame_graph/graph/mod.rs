@@ -14,7 +14,7 @@ use crate::frame_graph::{
     ResourceNode, ResourceTable, TransientResource, TransientResourceCache,
     TransientResourceDescriptor, TypeEquals, VirtualResource,
 };
-use bevy_render::renderer::RenderDevice;
+use robin_render::renderer::RenderDevice;
 
 pub struct FrameGraphContext<'a> {
     pub resource_table: ResourceTable,

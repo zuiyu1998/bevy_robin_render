@@ -27,13 +27,13 @@
 )]
 
 #[cfg(target_pointer_width = "16")]
-compile_error!("bevy_render cannot compile for a 16-bit platform.");
+compile_error!("robin_render cannot compile for a 16-bit platform.");
 
 extern crate alloc;
 extern crate core;
 
 // Required to make proc macros work in bevy itself.
-extern crate self as bevy_render;
+extern crate self as robin_render;
 
 pub mod batching;
 pub mod camera;

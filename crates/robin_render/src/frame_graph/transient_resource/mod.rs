@@ -11,7 +11,7 @@ pub use texture::*;
 pub use texture_view::*;
 
 use alloc::sync::Arc;
-use bevy_render::renderer::RenderDevice;
+use robin_render::renderer::RenderDevice;
 use core::fmt::Debug;
 use wgpu::{BindGroup, BindGroupEntry};
 

@@ -12,7 +12,7 @@ use quote::format_ident;
 use syn::{parse_macro_input, DeriveInput};
 
 pub(crate) fn bevy_render_path() -> syn::Path {
-    BevyManifest::shared(|manifest| manifest.get_path("bevy_render"))
+    BevyManifest::shared(|manifest| manifest.get_path("robin_render"))
 }
 
 pub(crate) fn bevy_ecs_path() -> syn::Path {

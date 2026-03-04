@@ -59,7 +59,7 @@ struct BindlessIndexTableRangeAttr {
 
 pub fn derive_as_bind_group(ast: syn::DeriveInput) -> Result<TokenStream> {
     let (render_path, image_path, asset_path, ecs_path) = BevyManifest::shared(|manifest| {
-        let render_path = manifest.get_path("bevy_render");
+        let render_path = manifest.get_path("robin_render");
         let image_path = manifest.get_path("bevy_image");
         let asset_path = manifest.get_path("bevy_asset");
         let ecs_path = manifest.get_path("bevy_ecs");

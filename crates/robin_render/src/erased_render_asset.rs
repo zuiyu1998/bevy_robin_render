@@ -13,7 +13,7 @@ use bevy_ecs::{
 };
 use bevy_log::{debug, error};
 use bevy_platform::collections::{HashMap, HashSet};
-use bevy_render::render_asset::RenderAssetBytesPerFrameLimiter;
+use robin_render::render_asset::RenderAssetBytesPerFrameLimiter;
 use core::marker::PhantomData;
 use thiserror::Error;
 

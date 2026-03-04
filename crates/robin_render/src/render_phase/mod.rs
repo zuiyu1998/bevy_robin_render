@@ -69,7 +69,7 @@ use bevy_log::warn;
 pub use bevy_material::labels::DrawFunctionId;
 pub use bevy_material_macros::DrawFunctionLabel;
 pub use bevy_material_macros::ShaderLabel;
-use bevy_render::renderer::RenderAdapterInfo;
+use robin_render::renderer::RenderAdapterInfo;
 use core::{
     fmt::Debug,
     hash::Hash,
