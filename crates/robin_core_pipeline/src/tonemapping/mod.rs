@@ -1,16 +1,20 @@
 use bevy_app::prelude::*;
 use bevy_asset::{
-    embedded_asset, load_embedded_asset, AssetServer, Assets, Handle, RenderAssetUsages,
+    AssetServer, Assets, Handle, RenderAssetUsages, embedded_asset, load_embedded_asset,
 };
 use bevy_camera::Camera;
 use bevy_ecs::prelude::*;
 use bevy_image::{CompressedImageFormats, Image, ImageSampler, ImageType};
 #[cfg(not(feature = "tonemapping_luts"))]
 use bevy_log::error;
-use bevy_reflect::{std_traits::ReflectDefault, Reflect};
+use bevy_reflect::{Reflect, std_traits::ReflectDefault};
+use bevy_shader::{Shader, ShaderDefVal, load_shader_library};
+use bitflags::bitflags;
 use robin_render::{
+    Render, RenderApp, RenderStartup, RenderSystems,
     extract_component::{ExtractComponent, ExtractComponentPlugin},
     extract_resource::{ExtractResource, ExtractResourcePlugin},
+    frame_graph::{FrameGraph, TransientBindGroupTextureViewHandle},
     render_asset::RenderAssets,
     render_resource::{
         binding_types::{sampler, texture_2d, texture_3d, uniform_buffer},
@@ -19,10 +23,7 @@ use robin_render::{
     renderer::RenderDevice,
     texture::{FallbackImage, GpuImage},
     view::{ExtractedView, ViewTarget, ViewUniform},
-    Render, RenderApp, RenderStartup, RenderSystems,
 };
-use bevy_shader::{load_shader_library, Shader, ShaderDefVal};
-use bitflags::bitflags;
 
 mod node;
 
@@ -382,7 +383,8 @@ pub fn get_lut_bindings<'a>(
     tonemapping_luts: &'a TonemappingLuts,
     tonemapping: &Tonemapping,
     fallback_image: &'a FallbackImage,
-) -> (&'a TextureView, &'a Sampler) {
+    frame_graph: &mut FrameGraph,
+) -> (TransientBindGroupTextureViewHandle, Sampler) {
     let image = match tonemapping {
         // AgX lut texture used when tonemapping doesn't need a texture since it's very small (32x32x32)
         Tonemapping::None
@@ -395,7 +397,10 @@ pub fn get_lut_bindings<'a>(
         Tonemapping::BlenderFilmic => &tonemapping_luts.blender_filmic,
     };
     let lut_image = images.get(image).unwrap_or(&fallback_image.d3);
-    (&lut_image.texture_view, &lut_image.sampler)
+    (
+        lut_image.get_texture_view_handle(frame_graph),
+        lut_image.sampler.clone(),
+    )
 }
 
 pub fn get_lut_bind_group_layout_entries() -> [BindGroupLayoutEntryBuilder; 2] {

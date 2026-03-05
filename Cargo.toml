@@ -6,9 +6,10 @@ edition = "2024"
 [workspace]
 members = [
     '.',
-    './crates/robin_render',
-    "./crates/robin_render/macros",
+    'crates/robin_render',
+    "crates/robin_render/macros",
     "crates/robin_core_pipeline",
+    "crates/robin_sprite_render",
 ]
 
 [workspace.dependencies]
@@ -38,6 +39,7 @@ bevy_time = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 bevy_transform = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 bevy_light = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 bevy_reflect = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+bevy_sprite = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 
 [workspace.lints.rust]
 missing_docs = "warn"

@@ -1,6 +1,7 @@
 use core::num::NonZero;
 
 use wgpu::{BindGroupLayout, Sampler};
+use variadics_please::all_tuples_with_size;
 
 use crate::frame_graph::{
     PassNodeBuilderExt, ResourceHandle, TransientBindGroup, TransientBindGroupBuffer,
@@ -112,7 +113,7 @@ impl TransientBindGroupHandle {
     }
 
     pub fn build(layout: &BindGroupLayout) -> TransientBindGroupHandleBuilder {
-        TransientBindGroupHandleBuilder::new(None, layout.clone())
+        TransientBindGroupHandleBuilder::new(layout)
     }
 }
 
@@ -157,12 +158,18 @@ pub struct TransientBindGroupHandleBuilder {
 }
 
 impl TransientBindGroupHandleBuilder {
-    pub fn new(label: Option<String>, layout: BindGroupLayout) -> Self {
+    pub fn new(layout: &BindGroupLayout) -> Self {
         Self {
-            label,
-            layout,
+            label: None,
+            layout: layout.clone(),
             entries: vec![],
         }
+    }
+
+    pub fn set_entries(mut self, entries: &[TransientBindGroupEntryHandle]) -> Self {
+        self.entries = entries.to_vec();
+
+        self
     }
 
     pub fn push<T: IntoTransientBindGroupResourceHandle>(mut self, value: T) -> Self {
@@ -188,5 +195,72 @@ impl TransientBindGroupHandleBuilder {
             layout: self.layout,
             entries: self.entries,
         }
+    }
+}
+
+pub trait IntoTransientBindGroupEntryHandleArray<const N: usize> {
+    fn into_array(self) -> [TransientBindGroupResourceHandle; N];
+}
+
+macro_rules! impl_to_transient_bind_group_entry_handle_slice {
+    ($N: expr, $(#[$meta:meta])* $(($T: ident, $I: ident)),*) => {
+        $(#[$meta])*
+        impl<$($T: IntoTransientBindGroupResourceHandle),*> IntoTransientBindGroupEntryHandleArray<$N> for ($($T,)*) {
+            #[inline]
+            fn into_array(self) -> [TransientBindGroupResourceHandle; $N] {
+                let ($($I,)*) = self;
+                [$($I.into_handle(), )*]
+            }
+        }
+    }
+}
+
+all_tuples_with_size!(
+    #[doc(fake_variadic)]
+    impl_to_transient_bind_group_entry_handle_slice,
+    1,
+    32,
+    T,
+    s
+);
+
+pub trait IntoIndexedTransientBindGroupResourceHandleArray<const N: usize> {
+    fn into_array(self) -> [(u32, TransientBindGroupResourceHandle); N];
+}
+
+pub struct BindGroupEntryHandles<const N: usize = 1> {
+    entries: [TransientBindGroupEntryHandle; N],
+}
+
+impl<const N: usize> BindGroupEntryHandles<N> {
+    #[inline]
+    pub fn sequential(resources: impl IntoTransientBindGroupEntryHandleArray<N>) -> Self {
+        let mut i = 0;
+        Self {
+            entries: resources.into_array().map(|resource| {
+                let binding = i;
+                i += 1;
+                TransientBindGroupEntryHandle { binding, resource }
+            }),
+        }
+    }
+
+    #[inline]
+    pub fn with_indices(
+        indexed_resources: impl IntoIndexedTransientBindGroupResourceHandleArray<N>,
+    ) -> Self {
+        Self {
+            entries: indexed_resources
+                .into_array()
+                .map(|(binding, resource)| TransientBindGroupEntryHandle { binding, resource }),
+        }
+    }
+}
+
+impl<const N: usize> core::ops::Deref for BindGroupEntryHandles<N> {
+    type Target = [TransientBindGroupEntryHandle];
+
+    fn deref(&self) -> &[TransientBindGroupEntryHandle] {
+        &self.entries
     }
 }

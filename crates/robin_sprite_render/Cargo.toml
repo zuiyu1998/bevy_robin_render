@@ -1,0 +1,58 @@
+[package]
+name = "robin_sprite_render"
+version = "0.19.0-dev"
+edition = "2024"
+description = "Provides sprite rendering functionality for Bevy Engine"
+homepage = "https://bevy.org"
+repository = "https://github.com/bevyengine/bevy"
+license = "MIT OR Apache-2.0"
+keywords = ["bevy"]
+
+[features]
+webgl = []
+webgpu = []
+bevy_text = ["dep:bevy_text", "bevy_sprite/bevy_text"]
+
+[dependencies]
+# bevy
+bevy_app = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+bevy_asset = { workspace = true }
+bevy_color = { workspace = true }
+bevy_ecs = { workspace = true }
+bevy_image = { workspace = true }
+bevy_camera = { workspace = true }
+bevy_mesh = { workspace = true }
+bevy_math = { workspace = true }
+bevy_shader = { workspace = true }
+bevy_material = { workspace = true }
+bevy_sprite = { workspace = true }
+bevy_text = { git = "https://github.com/bevyengine/bevy.git", branch = "main", optional = true }
+bevy_reflect = { workspace = true }
+bevy_transform = { workspace = true }
+bevy_utils = { workspace = true }
+bevy_derive = { workspace = true }
+bevy_platform = { git = "https://github.com/bevyengine/bevy.git", branch = "main", default-features = false, features = [
+  "std",
+] }
+
+robin_core_pipeline = { path = "../robin_core_pipeline" }
+robin_render = { path = "../robin_render" }
+
+# other
+bytemuck = { version = "1", features = ["derive", "must_cast"] }
+fixedbitset = "0.5"
+derive_more = { version = "2", default-features = false, features = ["from"] }
+bitflags = "2.3"
+nonmax = "0.5"
+tracing = { version = "0.1", default-features = false, features = ["std"] }
+
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+rustdoc-args = [
+  "-Zunstable-options",
+  "--generate-link-to-definition",
+  "--generate-macro-expansion",
+]
+all-features = true

@@ -2,8 +2,8 @@ pub mod visibility;
 pub mod window;
 
 use bevy_camera::{
-    primitives::Frustum, CameraMainTextureUsages, ClearColor, ClearColorConfig, Exposure,
-    MainPassResolutionOverride, NormalizedRenderTarget,
+    CameraMainTextureUsages, ClearColor, ClearColorConfig, Exposure, MainPassResolutionOverride,
+    NormalizedRenderTarget, primitives::Frustum,
 };
 use bevy_diagnostic::FrameCount;
 pub use visibility::*;
@@ -11,11 +11,13 @@ use wgpu_types::TextureViewDescriptor;
 pub use window::*;
 
 use crate::{
+    Render, RenderApp, RenderSystems,
     camera::{ExtractedCamera, MipBias, NormalizedRenderTargetExt as _, TemporalJitter},
     extract_component::ExtractComponentPlugin,
     frame_graph::{
-        FrameGraph, PassBuilder, ResourceMaterial, TransientBindGroupTextureViewHandle,
-        TransientRenderPassColorAttachment, TransientRenderPassDepthStencilAttachment,
+        FrameGraph, PassBuilder, PassNodeBuilderExt, ResourceHandle, ResourceMaterial,
+        TextureViewEdge, TransientBindGroupTextureViewHandle, TransientRenderPassColorAttachment,
+        TransientRenderPassDepthStencilAttachment, TransientTexture, TransientTextureView,
         TransientTextureViewDescriptor,
     },
     occlusion_culling::OcclusionCulling,
@@ -28,7 +30,6 @@ use crate::{
         CachedTexture, ColorAttachment, DepthAttachment, GpuImage, ManualTextureViews,
         OutputColorAttachment, TextureCache,
     },
-    Render, RenderApp, RenderSystems,
 };
 use alloc::sync::Arc;
 use bevy_app::{App, Plugin};
@@ -36,16 +37,16 @@ use bevy_color::LinearRgba;
 use bevy_derive::{Deref, DerefMut};
 use bevy_ecs::prelude::*;
 use bevy_image::{BevyDefault as _, ToExtents};
-use bevy_math::{mat3, vec2, vec3, Mat3, Mat4, UVec4, Vec2, Vec3, Vec4, Vec4Swizzles};
-use bevy_platform::collections::{hash_map::Entry, HashMap};
-use bevy_reflect::{std_traits::ReflectDefault, Reflect};
-use robin_render_macros::ExtractComponent;
+use bevy_math::{Mat3, Mat4, UVec4, Vec2, Vec3, Vec4, Vec4Swizzles, mat3, vec2, vec3};
+use bevy_platform::collections::{HashMap, hash_map::Entry};
+use bevy_reflect::{Reflect, std_traits::ReflectDefault};
 use bevy_shader::load_shader_library;
 use bevy_transform::components::GlobalTransform;
 use core::{
     ops::Range,
     sync::atomic::{AtomicUsize, Ordering},
 };
+use robin_render_macros::ExtractComponent;
 use wgpu::{
     BufferUsages, RenderPassColorAttachment, RenderPassDepthStencilAttachment, StoreOp,
     TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
@@ -626,11 +627,28 @@ pub struct ViewTarget {
 #[derive(Resource, Default, Deref, DerefMut)]
 pub struct ViewTargetAttachments(HashMap<NormalizedRenderTarget, OutputColorAttachment>);
 
-pub struct PostProcessWrite<'a> {
-    pub source: &'a TextureView,
-    pub source_texture: &'a Texture,
-    pub destination: &'a TextureView,
-    pub destination_texture: &'a Texture,
+pub struct PostProcessWrite {
+    pub source: TransientTextureViewDescriptor,
+    pub source_texture: ResourceHandle<TransientTexture>,
+    pub destination: TransientTextureViewDescriptor,
+    pub destination_texture: ResourceHandle<TransientTexture>,
+}
+
+impl PostProcessWrite {
+    pub fn destination<T: PassNodeBuilderExt>(&self, pass_node_builder: &mut T) -> TextureViewEdge {
+        let destination_texture = pass_node_builder.read(self.destination_texture.clone());
+        TextureViewEdge::Read(TransientTextureView {
+            texture: destination_texture,
+            desc: self.destination.clone(),
+        })
+    }
+
+    pub fn source_texture_view_handle(&self) -> TransientBindGroupTextureViewHandle {
+        TransientBindGroupTextureViewHandle {
+            texture: self.source_texture.clone(),
+            texture_view_desc: self.source.clone(),
+        }
+    }
 }
 
 impl From<ColorGrading> for ColorGradingUniform {
@@ -871,24 +889,25 @@ impl ViewTarget {
     /// [`ViewTarget`]'s main texture to the `destination` texture, so the caller
     /// _must_ ensure `source` is copied to `destination`, with or without modifications.
     /// Failing to do so will cause the current main texture information to be lost.
-    pub fn post_process_write(&self) -> PostProcessWrite<'_> {
+    pub fn post_process_write(&self, frame_graph: &mut FrameGraph) -> PostProcessWrite {
         let old_is_a_main_texture = self.main_texture.fetch_xor(1, Ordering::SeqCst);
         // if the old main texture is a, then the post processing must write from a to b
         if old_is_a_main_texture == 0 {
             self.main_textures.b.mark_as_cleared();
+
             PostProcessWrite {
-                source: &self.main_textures.a.texture.default_view,
-                source_texture: &self.main_textures.a.texture.texture,
-                destination: &self.main_textures.b.texture.default_view,
-                destination_texture: &self.main_textures.b.texture.texture,
+                source: TransientTextureViewDescriptor::default(),
+                source_texture: self.main_textures.a.texture.texture.imported(frame_graph),
+                destination: TransientTextureViewDescriptor::default(),
+                destination_texture: self.main_textures.b.texture.texture.imported(frame_graph),
             }
         } else {
             self.main_textures.a.mark_as_cleared();
             PostProcessWrite {
-                source: &self.main_textures.b.texture.default_view,
-                source_texture: &self.main_textures.b.texture.texture,
-                destination: &self.main_textures.a.texture.default_view,
-                destination_texture: &self.main_textures.a.texture.texture,
+                source: TransientTextureViewDescriptor::default(),
+                source_texture: self.main_textures.b.texture.texture.imported(frame_graph),
+                destination: TransientTextureViewDescriptor::default(),
+                destination_texture: self.main_textures.a.texture.texture.imported(frame_graph),
             }
         }
     }
