@@ -1,41 +1,44 @@
 use crate::{
-    init_mesh_2d_pipeline, DrawMesh2d, Mesh2dPipeline, Mesh2dPipelineKey, RenderMesh2dInstances,
-    SetMesh2dBindGroup, SetMesh2dViewBindGroup, ViewKeyCache,
+    DrawMesh2d, Mesh2dPipeline, Mesh2dPipelineKey, RenderMesh2dInstances, SetMesh2dBindGroup,
+    SetMesh2dViewBindGroup, ViewKeyCache, init_mesh_2d_pipeline,
 };
 use bevy_app::{App, Plugin, PostUpdate, Startup, Update};
 use bevy_asset::{
-    embedded_asset, load_embedded_asset, prelude::AssetChanged, AsAssetId, Asset, AssetApp,
-    AssetEventSystems, AssetId, AssetServer, Assets, Handle, UntypedAssetId,
+    AsAssetId, Asset, AssetApp, AssetEventSystems, AssetId, AssetServer, Assets, Handle,
+    UntypedAssetId, embedded_asset, load_embedded_asset, prelude::AssetChanged,
 };
-use bevy_camera::{visibility::ViewVisibility, Camera, Camera2d};
+use bevy_camera::{Camera, Camera2d, visibility::ViewVisibility};
 use bevy_color::{Color, ColorToComponents};
-use robin_core_pipeline::schedule::{Core2d, Core2dSystems};
 use bevy_derive::{Deref, DerefMut};
 use bevy_ecs::{
     change_detection::Tick,
     prelude::*,
-    system::{lifetimeless::SRes, SystemChangeTick, SystemParamItem},
+    system::{SystemChangeTick, SystemParamItem, lifetimeless::SRes},
 };
 use bevy_mesh::{Mesh2d, MeshVertexBufferLayoutRef};
 use bevy_platform::{
     collections::{HashMap, HashSet},
     hash::FixedHasher,
 };
-use bevy_reflect::{std_traits::ReflectDefault, Reflect};
+use bevy_reflect::{Reflect, std_traits::ReflectDefault};
+use bevy_shader::Shader;
+use core::{hash::Hash, ops::Range};
+use robin_core_pipeline::schedule::{Core2d, Core2dSystems};
 use robin_render::{
+    Extract, Render, RenderApp, RenderDebugFlags, RenderStartup, RenderSystems,
     batching::gpu_preprocessing::GpuPreprocessingMode,
     camera::{
-        extract_cameras, DirtySpecializationSystems, DirtyWireframeSpecializations,
-        ExtractedCamera, PendingQueues,
+        DirtySpecializationSystems, DirtyWireframeSpecializations, ExtractedCamera, PendingQueues,
+        extract_cameras,
     },
     extract_resource::ExtractResource,
     mesh::{
-        allocator::{MeshAllocator, SlabId},
         RenderMesh,
+        allocator::{MeshAllocator, SlabId},
     },
     prelude::*,
     render_asset::{
-        prepare_assets, PrepareAssetError, RenderAsset, RenderAssetPlugin, RenderAssets,
+        PrepareAssetError, RenderAsset, RenderAssetPlugin, RenderAssets, prepare_assets,
     },
     render_phase::{
         AddRenderCommand, BinnedPhaseItem, BinnedRenderPhasePlugin, BinnedRenderPhaseType,
@@ -44,15 +47,12 @@ use robin_render::{
         SetItemPipeline, TrackedRenderPass, ViewBinnedRenderPhases,
     },
     render_resource::*,
-    renderer::{RenderContext, ViewQuery},
+    renderer::{FrameGraphs, RenderContext, ViewQuery},
     sync_world::{MainEntity, MainEntityHashMap},
     view::{
         ExtractedView, RenderVisibleEntities, RetainedViewEntity, ViewDepthTexture, ViewTarget,
     },
-    Extract, Render, RenderApp, RenderDebugFlags, RenderStartup, RenderSystems,
 };
-use bevy_shader::Shader;
-use core::{hash::Hash, ops::Range};
 use tracing::error;
 
 /// A [`Plugin`] that draws wireframes for 2D meshes.
@@ -287,7 +287,7 @@ impl<P: PhaseItem> RenderCommand<P> for SetWireframe2dImmediates {
     type ItemQuery = ();
 
     #[inline]
-    fn render<'w,'b>(
+    fn render<'w, 'b>(
         item: &P,
         _view: (),
         _item_query: Option<()>,
@@ -359,7 +359,8 @@ pub(crate) fn wireframe_2d(
         &ViewDepthTexture,
     )>,
     wireframe_phases: Res<ViewBinnedRenderPhases<Wireframe2dPhaseItem>>,
-    mut ctx: RenderContext,
+    ctx: RenderContext,
+    mut frame_graphs: ResMut<FrameGraphs>,
 ) {
     let view_entity = view.entity();
 
@@ -373,14 +374,19 @@ pub(crate) fn wireframe_2d(
         return;
     }
 
-    let mut render_pass = ctx.begin_tracked_render_pass(RenderPassDescriptor {
-        label: Some("wireframe_2d"),
-        color_attachments: &[Some(target.get_color_attachment())],
-        depth_stencil_attachment: Some(depth.get_attachment(StoreOp::Store)),
-        timestamp_writes: None,
-        occlusion_query_set: None,
-        multiview_mask: None,
-    });
+    let mut frame_graph = frame_graphs.get_or_insert(view_entity);
+
+    let mut pass_builder = frame_graph.create_pass_builder("wireframe_2d_node");
+
+    let color_attachment = target.create_transient_render_pass_color_attachment(&mut pass_builder);
+    let depth_stencil_attachment = depth
+        .create_transient_render_pass_depth_stencil_attachment(StoreOp::Store, &mut pass_builder);
+    let mut render_pass_builder = pass_builder.create_render_pass_builder("wireframe_2d");
+
+    render_pass_builder.add_color_attachment(color_attachment);
+    render_pass_builder.set_depth_stencil_attachment(depth_stencil_attachment);
+
+    let mut render_pass = TrackedRenderPass::new(ctx.render_device(), render_pass_builder);
 
     if let Some(viewport) = camera.viewport.as_ref() {
         render_pass.set_camera_viewport(viewport);
