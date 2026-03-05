@@ -2,16 +2,16 @@ use core::{marker::PhantomData, num::NonZero};
 
 use crate::{
     frame_graph::{FrameGraph, ResourceMaterial, TransientBindGroupBufferHandle},
-    render_resource::{make_buffer_label, Buffer},
+    render_resource::{Buffer, make_buffer_label},
     renderer::{RenderDevice, RenderQueue},
 };
 use encase::{
-    internal::{AlignmentValue, BufferMut, WriteInto},
     DynamicUniformBuffer as DynamicUniformBufferWrapper, ShaderType,
     UniformBuffer as UniformBufferWrapper,
+    internal::{AlignmentValue, BufferMut, WriteInto},
 };
 use wgpu::{
-    util::BufferInitDescriptor, BindingResource, BufferBinding, BufferDescriptor, BufferUsages,
+    BindingResource, BufferBinding, BufferDescriptor, BufferUsages, util::BufferInitDescriptor,
 };
 
 use super::IntoBinding;
@@ -83,6 +83,17 @@ impl<T: ShaderType + WriteInto> UniformBuffer<T> {
         Some(BindingResource::Buffer(
             self.buffer()?.as_entire_buffer_binding(),
         ))
+    }
+
+    pub fn get_buffer_handle(
+        &self,
+        frame_graph: &mut FrameGraph,
+    ) -> Option<TransientBindGroupBufferHandle> {
+        Some(TransientBindGroupBufferHandle {
+            buffer: self.buffer()?.imported(frame_graph),
+            offset: 0,
+            size: None,
+        })
     }
 
     /// Set the data the buffer stores.

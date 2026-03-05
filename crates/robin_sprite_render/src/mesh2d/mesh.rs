@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use bevy_app::Plugin;
 use bevy_asset::{AssetId, AssetServer, Handle, embedded_asset, load_embedded_asset};
 use bevy_camera::{Camera2d, visibility::ViewVisibility};
@@ -5,9 +7,7 @@ use bevy_shader::{Shader, ShaderDefVal, ShaderSettings, load_shader_library};
 use robin_render::{
     RenderStartup,
     camera::DirtySpecializations,
-    frame_graph::{
-        BindGroupEntryHandles, TransientBindGroupHandle, TransientBindGroupHandleBuilder,
-    },
+    frame_graph::{BindGroupEntryHandles, TransientBindGroupHandle},
     renderer::FrameGraphs,
 };
 
@@ -664,7 +664,7 @@ impl SpecializedMeshPipeline for Mesh2dPipeline {
     }
 }
 
-#[derive(Resource)]
+#[derive(Component)]
 pub struct Mesh2dBindGroup {
     pub value: TransientBindGroupHandle,
 }
@@ -672,18 +672,24 @@ pub struct Mesh2dBindGroup {
 pub fn prepare_mesh2d_bind_group(
     mut commands: Commands,
     mesh2d_pipeline: Res<Mesh2dPipeline>,
-    render_device: Res<RenderDevice>,
     pipeline_cache: Res<PipelineCache>,
     mesh2d_uniforms: Res<BatchedInstanceBuffer<Mesh2dUniform>>,
+    views: Query<Entity, (With<ExtractedView>, With<Camera2d>)>,
+    mut frame_graphs: ResMut<FrameGraphs>,
 ) {
-    if let Some(binding) = mesh2d_uniforms.instance_data_binding() {
-        commands.insert_resource(Mesh2dBindGroup {
-            value: render_device.create_bind_group(
-                "mesh2d_bind_group",
+    for entity in &views {
+        let mut frame_graph = frame_graphs.get_or_insert(entity);
+
+        if let Some(binding) = mesh2d_uniforms.get_buffer_handle(&mut frame_graph) {
+            let value = TransientBindGroupHandle::build(
                 &pipeline_cache.get_bind_group_layout(&mesh2d_pipeline.mesh_layout),
-                &BindGroupEntries::single(binding),
-            ),
-        });
+            )
+            .set_label("mesh2d_bind_group")
+            .set_entries(&BindGroupEntryHandles::single(binding))
+            .finished();
+
+            commands.entity(entity).insert(Mesh2dBindGroup { value });
+        }
     }
 }
 
@@ -694,7 +700,6 @@ pub struct Mesh2dViewBindGroup {
 
 pub fn prepare_mesh2d_view_bind_groups(
     mut commands: Commands,
-    render_device: Res<RenderDevice>,
     pipeline_cache: Res<PipelineCache>,
     mesh2d_pipeline: Res<Mesh2dPipeline>,
     view_uniforms: Res<ViewUniforms>,
@@ -705,7 +710,7 @@ pub fn prepare_mesh2d_view_bind_groups(
     fallback_image: Res<FallbackImage>,
     mut frame_graphs: ResMut<FrameGraphs>,
 ) {
-    let (Some(view_binding), Some(globals)) = (
+    let (Some(_view_binding), Some(_globals)) = (
         view_uniforms.uniforms.buffer(),
         globals_buffer.buffer.buffer(),
     ) else {
@@ -713,7 +718,7 @@ pub fn prepare_mesh2d_view_bind_groups(
     };
 
     for (entity, tonemapping) in &views {
-        let frame_graph = frame_graphs.get_or_insert(entity);
+        let mut frame_graph = frame_graphs.get_or_insert(entity);
 
         let (Some(view_binding), Some(globals)) = (
             view_uniforms.uniforms.get_buffer_handle(frame_graph),
@@ -738,7 +743,7 @@ pub fn prepare_mesh2d_view_bind_groups(
             view_binding.clone(),
             globals.clone(),
             lut_bindings.0,
-            lut_bindings.1,
+            lut_bindings.1.deref(),
         )))
         .finished();
 
@@ -770,17 +775,17 @@ impl<P: PhaseItem, const I: usize> RenderCommand<P> for SetMesh2dViewBindGroup<I
 
 pub struct SetMesh2dBindGroup<const I: usize>;
 impl<P: PhaseItem, const I: usize> RenderCommand<P> for SetMesh2dBindGroup<I> {
-    type Param = SRes<Mesh2dBindGroup>;
-    type ViewQuery = ();
+    type Param = ();
+    type ViewQuery = (Read<Mesh2dBindGroup>,);
     type ItemQuery = ();
 
     #[inline]
-    fn render<'w>(
+    fn render<'w, 'b>(
         item: &P,
-        _view: (),
+        (mesh2d_bind_group,): ROQueryItem<'w, '_, Self::ViewQuery>,
         _item_query: Option<()>,
-        mesh2d_bind_group: SystemParamItem<'w, '_, Self::Param>,
-        pass: &mut TrackedRenderPass<'w>,
+        _param: SystemParamItem<'w, '_, Self::Param>,
+        pass: &mut TrackedRenderPass<'w, 'b>,
     ) -> RenderCommandResult {
         let mut dynamic_offsets: [u32; 1] = Default::default();
         let mut offset_count = 0;
@@ -790,7 +795,7 @@ impl<P: PhaseItem, const I: usize> RenderCommand<P> for SetMesh2dBindGroup<I> {
         }
         pass.set_bind_group_handle(
             I,
-            &mesh2d_bind_group.into_inner().value,
+            &mesh2d_bind_group.value,
             &dynamic_offsets[..offset_count],
         );
         RenderCommandResult::Success
@@ -808,12 +813,12 @@ impl<P: PhaseItem> RenderCommand<P> for DrawMesh2d {
     type ItemQuery = ();
 
     #[inline]
-    fn render<'w>(
+    fn render<'w, 'b>(
         item: &P,
         _view: (),
         _item_query: Option<()>,
         (meshes, render_mesh2d_instances, mesh_allocator): SystemParamItem<'w, '_, Self::Param>,
-        pass: &mut TrackedRenderPass<'w>,
+        pass: &mut TrackedRenderPass<'w, 'b>,
     ) -> RenderCommandResult {
         let meshes = meshes.into_inner();
         let render_mesh2d_instances = render_mesh2d_instances.into_inner();

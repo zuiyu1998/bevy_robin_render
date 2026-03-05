@@ -257,6 +257,15 @@ impl<const N: usize> BindGroupEntryHandles<N> {
     }
 }
 
+impl BindGroupEntryHandles< 1> {
+    pub fn single(resource: impl IntoTransientBindGroupResourceHandle) -> [TransientBindGroupEntryHandle; 1] {
+        [TransientBindGroupEntryHandle {
+            binding: 0,
+            resource: resource.into_handle(),
+        }]
+    }
+}
+
 impl<const N: usize> core::ops::Deref for BindGroupEntryHandles<N> {
     type Target = [TransientBindGroupEntryHandle];
 

@@ -5,10 +5,10 @@ use crate::{
     render_resource::{AtomicPod, Buffer},
     renderer::{RenderDevice, RenderQueue},
 };
-use bytemuck::{must_cast_slice, NoUninit};
+use bytemuck::{NoUninit, must_cast_slice};
 use encase::{
-    internal::{WriteInto, Writer},
     ShaderType,
+    internal::{WriteInto, Writer},
 };
 use thiserror::Error;
 use wgpu::{BindingResource, BufferAddress, BufferUsages};
@@ -489,6 +489,17 @@ where
         Some(BindingResource::Buffer(
             self.buffer()?.as_entire_buffer_binding(),
         ))
+    }
+
+    pub fn get_buffer_handle(
+        &self,
+        frame_graph: &mut FrameGraph,
+    ) -> Option<TransientBindGroupBufferHandle> {
+        Some(TransientBindGroupBufferHandle {
+            buffer: self.buffer()?.imported(frame_graph),
+            offset: 0,
+            size: Some(T::min_size()),
+        })
     }
 
     /// Returns the amount of space that the GPU will use before reallocating.

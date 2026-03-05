@@ -63,7 +63,6 @@ bevy_color = { workspace = true, features = [
 bevy_derive = { workspace = true }
 bevy_diagnostic = { workspace = true }
 bevy_ecs = { workspace = true }
-bevy_encase_derive = { workspace = true }
 bevy_math = { workspace = true }
 bevy_material = { workspace = true }
 bevy_reflect = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
@@ -84,6 +83,7 @@ bevy_platform = { workspace = true, default-features = false, features = [
 ] }
 
 robin_render_macros = { path = "./macros" }
+robin_encase_derive = { path = '../robin_encase_derive' }
 
 # rendering
 image = { version = "0.25.2", default-features = false }

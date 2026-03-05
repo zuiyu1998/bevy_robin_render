@@ -1,12 +1,11 @@
 use super::{GpuArrayBufferIndex, GpuArrayBufferable};
 use crate::{
-    render_resource::DynamicUniformBuffer,
-    renderer::{RenderDevice, RenderQueue},
+    frame_graph::{FrameGraph, ResourceMaterial, TransientBindGroupBufferHandle}, render_resource::DynamicUniformBuffer, renderer::{RenderDevice, RenderQueue}
 };
 use core::{marker::PhantomData, num::NonZero};
 use encase::{
-    private::{ArrayMetadata, BufferMut, Metadata, RuntimeSizedArray, WriteInto, Writer},
     ShaderType,
+    private::{ArrayMetadata, BufferMut, Metadata, RuntimeSizedArray, WriteInto, Writer},
 };
 use nonmax::NonMaxU32;
 use wgpu::{BindingResource, Limits};
@@ -116,6 +115,17 @@ impl<T: GpuArrayBufferable> BatchedUniformBuffer<T> {
             binding.size = Some(self.size());
         }
         binding
+    }
+
+    pub fn get_buffer_handle(
+        &self,
+        frame_graph: &mut FrameGraph,
+    ) -> Option<TransientBindGroupBufferHandle> {
+        Some(TransientBindGroupBufferHandle {
+            buffer: self.uniforms.buffer()?.imported(frame_graph),
+            offset: 0,
+            size: Some(self.size()),
+        })
     }
 }
 

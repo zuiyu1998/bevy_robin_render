@@ -21,8 +21,8 @@ use bevy_image::{BevyDefault, Image, TextureAtlasLayout};
 use bevy_math::{Affine3A, FloatOrd, Quat, Rect, Vec2, Vec4};
 use bevy_mesh::VertexBufferLayout;
 use bevy_platform::collections::HashMap;
-use bevy_render::view::{RenderVisibleEntities, RetainedViewEntity};
-use bevy_render::{
+use robin_render::{frame_graph::{TransientBindGroup, TransientBindGroupHandle}, view::{RenderVisibleEntities, RetainedViewEntity}};
+use robin_render::{
     render_asset::RenderAssets,
     render_phase::{
         DrawFunctions, PhaseItem, PhaseItemExtraIndex, RenderCommand, RenderCommandResult,
@@ -451,7 +451,7 @@ impl Default for SpriteMeta {
 
 #[derive(Component)]
 pub struct SpriteViewBindGroup {
-    pub value: BindGroup,
+    pub value: TransientBindGroupHandle,
 }
 
 #[derive(Resource, Deref, DerefMut, Default)]
@@ -851,12 +851,12 @@ impl<P: PhaseItem, const I: usize> RenderCommand<P> for SetSpriteViewBindGroup<I
     type ViewQuery = (Read<ViewUniformOffset>, Read<SpriteViewBindGroup>);
     type ItemQuery = ();
 
-    fn render<'w>(
+    fn render<'w, 'b>(
         _item: &P,
         (view_uniform, sprite_view_bind_group): ROQueryItem<'w, '_, Self::ViewQuery>,
         _entity: Option<()>,
         _param: SystemParamItem<'w, '_, Self::Param>,
-        pass: &mut TrackedRenderPass<'w>,
+        pass: &mut TrackedRenderPass<'w, 'b>,
     ) -> RenderCommandResult {
         pass.set_bind_group(I, &sprite_view_bind_group.value, &[view_uniform.offset]);
         RenderCommandResult::Success

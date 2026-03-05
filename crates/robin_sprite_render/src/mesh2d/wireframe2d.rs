@@ -22,7 +22,7 @@ use bevy_platform::{
     hash::FixedHasher,
 };
 use bevy_reflect::{std_traits::ReflectDefault, Reflect};
-use bevy_render::{
+use robin_render::{
     batching::gpu_preprocessing::GpuPreprocessingMode,
     camera::{
         extract_cameras, DirtySpecializationSystems, DirtyWireframeSpecializations,
@@ -287,12 +287,12 @@ impl<P: PhaseItem> RenderCommand<P> for SetWireframe2dImmediates {
     type ItemQuery = ();
 
     #[inline]
-    fn render<'w>(
+    fn render<'w,'b>(
         item: &P,
         _view: (),
         _item_query: Option<()>,
         (wireframe_instances, wireframe_assets): SystemParamItem<'w, '_, Self::Param>,
-        pass: &mut TrackedRenderPass<'w>,
+        pass: &mut TrackedRenderPass<'w, 'b>,
     ) -> RenderCommandResult {
         let Some(wireframe_material) = wireframe_instances.get(&item.main_entity()) else {
             return RenderCommandResult::Failure("No wireframe material found for entity");

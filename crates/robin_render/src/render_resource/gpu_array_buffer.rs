@@ -1,16 +1,17 @@
 use bevy_material::bind_group_layout_entries::{
-    binding_types::{storage_buffer_read_only, uniform_buffer_sized},
     BindGroupLayoutEntryBuilder,
+    binding_types::{storage_buffer_read_only, uniform_buffer_sized},
 };
 
 use super::BufferVec;
 use crate::{
+    frame_graph::{FrameGraph, TransientBindGroupBufferHandle},
     render_resource::batched_uniform_buffer::BatchedUniformBuffer,
     renderer::{RenderDevice, RenderQueue},
 };
 use bevy_ecs::{prelude::Component, resource::Resource};
 use core::marker::PhantomData;
-use encase::{private::WriteInto, ShaderSize, ShaderType};
+use encase::{ShaderSize, ShaderType, private::WriteInto};
 use nonmax::NonMaxU32;
 use wgpu::{BindingResource, BufferUsages, Limits};
 
@@ -94,6 +95,16 @@ impl<T: GpuArrayBufferable> GpuArrayBuffer<T> {
         match self {
             GpuArrayBuffer::Uniform(buffer) => buffer.binding(),
             GpuArrayBuffer::Storage(buffer) => buffer.binding(),
+        }
+    }
+
+    pub fn get_buffer_handle(
+        &self,
+        frame_graph: &mut FrameGraph,
+    ) -> Option<TransientBindGroupBufferHandle> {
+        match self {
+            GpuArrayBuffer::Uniform(buffer) => buffer.get_buffer_handle(frame_graph),
+            GpuArrayBuffer::Storage(buffer) => buffer.get_buffer_handle(frame_graph),
         }
     }
 

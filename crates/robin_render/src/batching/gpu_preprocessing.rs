@@ -17,7 +17,7 @@ use bevy_ecs::{
     system::{Query, Res, ResMut, StaticSystemParam},
     world::{FromWorld, World},
 };
-use bevy_encase_derive::ShaderType;
+use robin_encase_derive::ShaderType;
 use bevy_log::{error, info};
 use bevy_math::UVec4;
 use bevy_platform::collections::{hash_map::Entry, HashMap, HashSet};

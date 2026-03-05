@@ -10,6 +10,7 @@ members = [
     "crates/robin_render/macros",
     "crates/robin_core_pipeline",
     "crates/robin_sprite_render",
+    "crates/robin_encase_derive"
 ]
 
 [workspace.dependencies]

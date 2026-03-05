@@ -64,7 +64,7 @@ pub use wgpu::{
 };
 
 pub mod encase {
-    pub use bevy_encase_derive::ShaderType;
+    pub use robin_encase_derive::ShaderType;
     pub use encase::*;
 }
 
