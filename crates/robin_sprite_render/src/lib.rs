@@ -34,17 +34,17 @@ pub(crate) use texture_slice::*;
 pub use tilemap_chunk::*;
 
 use bevy_app::prelude::*;
-use bevy_asset::{embedded_asset, AssetEventSystems};
-use robin_core_pipeline::core_2d::{AlphaMask2d, Opaque2d, Transparent2d};
+use bevy_asset::{AssetEventSystems, embedded_asset};
 use bevy_ecs::prelude::*;
-use bevy_image::{prelude::*, TextureAtlasPlugin};
+use bevy_image::{TextureAtlasPlugin, prelude::*};
 use bevy_mesh::Mesh2d;
-use robin_render::{
-    batching::sort_binned_render_phase, render_phase::AddRenderCommand,
-    render_resource::SpecializedRenderPipelines, sync_world::SyncToRenderWorld, ExtractSchedule,
-    Render, RenderApp, RenderStartup, RenderSystems,
-};
 use bevy_sprite::Sprite;
+use robin_core_pipeline::core_2d::{AlphaMask2d, Opaque2d, Transparent2d};
+use robin_render::{
+    ExtractSchedule, Render, RenderApp, RenderStartup, RenderSystems,
+    batching::sort_binned_render_phase, render_phase::AddRenderCommand,
+    render_resource::SpecializedRenderPipelines, sync_world::SyncToRenderWorld,
+};
 
 #[cfg(feature = "bevy_text")]
 pub use crate::text2d::extract_text2d_sprite;
@@ -90,7 +90,6 @@ impl Plugin for SpriteRenderPlugin {
 
         if let Some(render_app) = app.get_sub_app_mut(RenderApp) {
             render_app
-                .init_resource::<ImageBindGroups>()
                 .init_resource::<SpecializedRenderPipelines<SpritePipeline>>()
                 .init_resource::<SpriteMeta>()
                 .init_resource::<ExtractedSprites>()

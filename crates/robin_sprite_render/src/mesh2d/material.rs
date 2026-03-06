@@ -1,6 +1,6 @@
 use crate::{
-    init_mesh_2d_pipeline, DrawMesh2d, Mesh2d, Mesh2dPipeline, Mesh2dPipelineKey,
-    RenderMesh2dInstances, SetMesh2dBindGroup, SetMesh2dViewBindGroup, ViewKeyCache,
+    DrawMesh2d, Mesh2d, Mesh2dPipeline, Mesh2dPipelineKey, RenderMesh2dInstances,
+    SetMesh2dBindGroup, SetMesh2dViewBindGroup, ViewKeyCache, init_mesh_2d_pipeline,
 };
 use bevy_app::{App, Plugin, PostUpdate};
 use bevy_asset::prelude::AssetChanged;
@@ -8,32 +8,37 @@ use bevy_asset::{
     AsAssetId, Asset, AssetApp, AssetEventSystems, AssetId, AssetServer, Handle, UntypedAssetId,
 };
 use bevy_camera::visibility::ViewVisibility;
-use robin_core_pipeline::{
-    core_2d::{
-        AlphaMask2d, AlphaMask2dBinKey, BatchSetKey2d, Opaque2d, Opaque2dBinKey, Transparent2d,
-    },
-    tonemapping::Tonemapping,
-};
 use bevy_derive::{Deref, DerefMut};
 use bevy_ecs::{
     prelude::*,
     system::{
-        lifetimeless::{SRes, SResMut},
         SystemParamItem,
+        lifetimeless::{SRes, SResMut},
     },
 };
 use bevy_math::FloatOrd;
 use bevy_mesh::MeshVertexBufferLayoutRef;
 use bevy_platform::collections::{HashMap, HashSet};
 use bevy_platform::hash::FixedHasher;
-use bevy_reflect::{prelude::ReflectDefault, Reflect};
+use bevy_reflect::{Reflect, prelude::ReflectDefault};
+use bevy_shader::{Shader, ShaderDefVal, ShaderRef};
+use bevy_utils::Parallel;
+use core::{hash::Hash, marker::PhantomData};
+use derive_more::derive::From;
+use robin_core_pipeline::{
+    core_2d::{
+        AlphaMask2d, AlphaMask2dBinKey, BatchSetKey2d, Opaque2d, Opaque2dBinKey, Transparent2d,
+    },
+    tonemapping::Tonemapping,
+};
 use robin_render::camera::{DirtySpecializationSystems, DirtySpecializations, PendingQueues};
 use robin_render::render_resource::BindGroupLayoutDescriptor;
 use robin_render::view::RetainedViewEntity;
 use robin_render::{
+    Extract, ExtractSchedule, Render, RenderApp, RenderStartup, RenderSystems,
     mesh::RenderMesh,
     render_asset::{
-        prepare_assets, PrepareAssetError, RenderAsset, RenderAssetPlugin, RenderAssets,
+        PrepareAssetError, RenderAsset, RenderAssetPlugin, RenderAssets, prepare_assets,
     },
     render_phase::{
         AddRenderCommand, BinnedRenderPhaseType, DrawFunctionId, DrawFunctions, InputUniformIndex,
@@ -48,12 +53,7 @@ use robin_render::{
     renderer::RenderDevice,
     sync_world::{MainEntity, MainEntityHashMap},
     view::{ExtractedView, RenderVisibleEntities},
-    Extract, ExtractSchedule, Render, RenderApp, RenderStartup, RenderSystems,
 };
-use bevy_shader::{Shader, ShaderDefVal, ShaderRef};
-use bevy_utils::Parallel;
-use core::{hash::Hash, marker::PhantomData};
-use derive_more::derive::From;
 use tracing::error;
 
 pub const MATERIAL_2D_BIND_GROUP_INDEX: usize = 2;
@@ -543,17 +543,17 @@ impl<P: PhaseItem, M: Material2d, const I: usize> RenderCommand<P>
         _view: (),
         _item_query: Option<()>,
         (materials, material_instances): SystemParamItem<'w, '_, Self::Param>,
-        pass: &mut TrackedRenderPass<'w, 'b>,
+        _pass: &mut TrackedRenderPass<'w, 'b>,
     ) -> RenderCommandResult {
         let materials = materials.into_inner();
         let material_instances = material_instances.into_inner();
         let Some(material_instance) = material_instances.get(&item.main_entity()) else {
             return RenderCommandResult::Skip;
         };
-        let Some(material2d) = materials.get(*material_instance) else {
+        let Some(_material2d) = materials.get(*material_instance) else {
             return RenderCommandResult::Skip;
         };
-        pass.set_bind_group(I, &material2d.bind_group, &[]);
+        // pass.set_bind_group(I, &material2d.bind_group, &[]);
         RenderCommandResult::Success
     }
 }

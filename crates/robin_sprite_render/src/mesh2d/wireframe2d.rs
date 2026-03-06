@@ -374,7 +374,7 @@ pub(crate) fn wireframe_2d(
         return;
     }
 
-    let mut frame_graph = frame_graphs.get_or_insert(view_entity);
+    let frame_graph = frame_graphs.get_or_insert(view_entity);
 
     let mut pass_builder = frame_graph.create_pass_builder("wireframe_2d_node");
 

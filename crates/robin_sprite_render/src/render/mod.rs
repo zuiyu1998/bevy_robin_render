@@ -1,28 +1,36 @@
 use core::ops::Range;
+use std::ops::Deref;
 
 use crate::ComputedTextureSlices;
-use bevy_asset::{load_embedded_asset, AssetEvent, AssetId, AssetServer, Assets, Handle};
+use bevy_asset::{AssetEvent, AssetId, AssetServer, Assets, Handle, load_embedded_asset};
 use bevy_camera::visibility::ViewVisibility;
 use bevy_color::{ColorToComponents, LinearRgba};
-use robin_core_pipeline::{
-    core_2d::{Transparent2d, CORE_2D_DEPTH_FORMAT},
-    tonemapping::{
-        get_lut_bind_group_layout_entries, get_lut_bindings, DebandDither, Tonemapping,
-        TonemappingLuts,
-    },
-};
 use bevy_derive::{Deref, DerefMut};
 use bevy_ecs::{
     prelude::*,
     query::ROQueryItem,
-    system::{lifetimeless::*, SystemParamItem},
+    system::{SystemParamItem, lifetimeless::*},
 };
 use bevy_image::{BevyDefault, Image, TextureAtlasLayout};
 use bevy_math::{Affine3A, FloatOrd, Quat, Rect, Vec2, Vec4};
 use bevy_mesh::VertexBufferLayout;
 use bevy_platform::collections::HashMap;
-use robin_render::{frame_graph::{TransientBindGroup, TransientBindGroupHandle}, view::{RenderVisibleEntities, RetainedViewEntity}};
+use bevy_shader::{Shader, ShaderDefVal};
+use bevy_sprite::{Anchor, Sprite, SpriteScalingMode};
+use bevy_transform::components::GlobalTransform;
+use bevy_utils::default;
+use bytemuck::{Pod, Zeroable};
+use fixedbitset::FixedBitSet;
+use robin_core_pipeline::{
+    core_2d::{CORE_2D_DEPTH_FORMAT, Transparent2d},
+    tonemapping::{
+        DebandDither, Tonemapping, TonemappingLuts, get_lut_bind_group_layout_entries,
+        get_lut_bindings,
+    },
+};
 use robin_render::{
+    Extract,
+    frame_graph::BindGroupEntryHandles,
     render_asset::RenderAssets,
     render_phase::{
         DrawFunctions, PhaseItem, PhaseItemExtraIndex, RenderCommand, RenderCommandResult,
@@ -36,14 +44,12 @@ use robin_render::{
     sync_world::RenderEntity,
     texture::{FallbackImage, GpuImage},
     view::{ExtractedView, Msaa, ViewTarget, ViewUniform, ViewUniformOffset, ViewUniforms},
-    Extract,
 };
-use bevy_shader::{Shader, ShaderDefVal};
-use bevy_sprite::{Anchor, Sprite, SpriteScalingMode};
-use bevy_transform::components::GlobalTransform;
-use bevy_utils::default;
-use bytemuck::{Pod, Zeroable};
-use fixedbitset::FixedBitSet;
+use robin_render::{
+    frame_graph::TransientBindGroupHandle,
+    renderer::FrameGraphs,
+    view::{RenderVisibleEntities, RetainedViewEntity},
+};
 
 #[derive(Resource)]
 pub struct SpritePipeline {
@@ -463,11 +469,6 @@ pub struct SpriteBatch {
     range: Range<u32>,
 }
 
-#[derive(Resource, Default)]
-pub struct ImageBindGroups {
-    values: HashMap<AssetId<Image>, BindGroup>,
-}
-
 pub fn queue_sprites(
     mut view_entities: Local<FixedBitSet>,
     draw_functions: Res<DrawFunctions<Transparent2d>>,
@@ -565,7 +566,6 @@ pub fn queue_sprites(
 
 pub fn prepare_sprite_view_bind_groups(
     mut commands: Commands,
-    render_device: Res<RenderDevice>,
     pipeline_cache: Res<PipelineCache>,
     sprite_pipeline: Res<SpritePipeline>,
     view_uniforms: Res<ViewUniforms>,
@@ -573,24 +573,47 @@ pub fn prepare_sprite_view_bind_groups(
     tonemapping_luts: Res<TonemappingLuts>,
     images: Res<RenderAssets<GpuImage>>,
     fallback_image: Res<FallbackImage>,
+    mut frame_graph: ResMut<FrameGraphs>,
 ) {
-    let Some(view_binding) = view_uniforms.uniforms.binding() else {
+    let Some(_view_binding) = view_uniforms.uniforms.buffer() else {
         return;
     };
 
     for (entity, tonemapping) in &views {
-        let lut_bindings =
-            get_lut_bindings(&images, &tonemapping_luts, tonemapping, &fallback_image);
-        let view_bind_group = render_device.create_bind_group(
-            "mesh2d_view_bind_group",
-            &pipeline_cache.get_bind_group_layout(&sprite_pipeline.view_layout),
-            &BindGroupEntries::sequential((view_binding.clone(), lut_bindings.0, lut_bindings.1)),
+        let mut frame_graph = frame_graph.get_or_insert(entity);
+
+        let view_binding = view_uniforms
+            .uniforms
+            .get_buffer_handle(frame_graph)
+            .unwrap();
+
+        let lut_bindings = get_lut_bindings(
+            &images,
+            &tonemapping_luts,
+            tonemapping,
+            &fallback_image,
+            &mut frame_graph,
         );
+        let view_bind_group = TransientBindGroupHandle::build(
+            &pipeline_cache.get_bind_group_layout(&sprite_pipeline.view_layout),
+        )
+        .set_label("mesh2d_view_bind_group")
+        .set_entries(&BindGroupEntryHandles::sequential((
+            view_binding,
+            lut_bindings.0,
+            lut_bindings.1.deref(),
+        )))
+        .finished();
 
         commands.entity(entity).insert(SpriteViewBindGroup {
             value: view_bind_group,
         });
     }
+}
+
+#[derive(Component)]
+pub struct SpriteImageBindGroup {
+    bind_group: TransientBindGroupHandle,
 }
 
 pub fn prepare_sprite_image_bind_groups(
@@ -599,26 +622,15 @@ pub fn prepare_sprite_image_bind_groups(
     pipeline_cache: Res<PipelineCache>,
     mut sprite_meta: ResMut<SpriteMeta>,
     sprite_pipeline: Res<SpritePipeline>,
-    mut image_bind_groups: ResMut<ImageBindGroups>,
     gpu_images: Res<RenderAssets<GpuImage>>,
     extracted_sprites: Res<ExtractedSprites>,
     extracted_slices: Res<ExtractedSlices>,
     mut phases: ResMut<ViewSortedRenderPhases<Transparent2d>>,
-    events: Res<SpriteAssetEvents>,
     mut batches: ResMut<SpriteBatches>,
+    views: Query<(Entity, &ExtractedView)>,
+    mut frame_graphs: ResMut<FrameGraphs>,
+    mut commands: Commands,
 ) {
-    // If an image has changed, the GpuImage has (probably) changed
-    for event in &events.images {
-        match event {
-            AssetEvent::Added { .. } |
-            // Images don't have dependencies
-            AssetEvent::LoadedWithDependencies { .. } => {}
-            AssetEvent::Unused { id } | AssetEvent::Modified { id } | AssetEvent::Removed { id } => {
-                image_bind_groups.values.remove(id);
-            }
-        };
-    }
-
     batches.clear();
 
     // Clear the sprite instances
@@ -627,7 +639,7 @@ pub fn prepare_sprite_image_bind_groups(
     // Index buffer indices
     let mut index = 0;
 
-    let image_bind_groups = &mut *image_bind_groups;
+    let mut tmp_sprite_batch_map = HashMap::new();
 
     for (retained_view, transparent_phase) in phases.iter_mut() {
         let mut current_batch = None;
@@ -660,19 +672,6 @@ pub fn prepare_sprite_image_bind_groups(
 
                 batch_image_size = gpu_image.size_2d().as_vec2();
                 batch_image_handle = extracted_sprite.image_handle_id;
-                image_bind_groups
-                    .values
-                    .entry(batch_image_handle)
-                    .or_insert_with(|| {
-                        render_device.create_bind_group(
-                            "sprite_material_bind_group",
-                            &pipeline_cache.get_bind_group_layout(&sprite_pipeline.material_layout),
-                            &BindGroupEntries::sequential((
-                                &gpu_image.texture_view,
-                                &gpu_image.sampler,
-                            )),
-                        )
-                    });
 
                 batch_item_index = item_index;
                 current_batch = Some(batches.entry((*retained_view, item.entity())).insert(
@@ -681,6 +680,10 @@ pub fn prepare_sprite_image_bind_groups(
                         range: index..index,
                     },
                 ));
+
+                tmp_sprite_batch_map
+                    .entry(*retained_view)
+                    .insert(batch_image_handle);
             }
             match extracted_sprite.kind {
                 ExtractedSpriteKind::Single {
@@ -836,6 +839,30 @@ pub fn prepare_sprite_image_bind_groups(
                 .write_buffer(&render_device, &render_queue);
         }
     }
+
+    for (entity, view) in views.iter() {
+        if let Some(batch_image_handle) = tmp_sprite_batch_map.get(&view.retained_view_entity) {
+            let Some(gpu_image) = gpu_images.get(*batch_image_handle) else {
+                continue;
+            };
+
+            let frame_graph = frame_graphs.get_or_insert(entity);
+
+            let bind_group = TransientBindGroupHandle::build(
+                &pipeline_cache.get_bind_group_layout(&sprite_pipeline.material_layout),
+            )
+            .set_label("sprite_material_bind_group")
+            .set_entries(&BindGroupEntryHandles::sequential((
+                gpu_image.get_texture_view_handle(frame_graph),
+                gpu_image.sampler.deref(),
+            )))
+            .finished();
+
+            commands
+                .entity(entity)
+                .insert(SpriteImageBindGroup { bind_group });
+        }
+    }
 }
 /// [`RenderCommand`] for sprite rendering.
 pub type DrawSprite = (
@@ -858,36 +885,28 @@ impl<P: PhaseItem, const I: usize> RenderCommand<P> for SetSpriteViewBindGroup<I
         _param: SystemParamItem<'w, '_, Self::Param>,
         pass: &mut TrackedRenderPass<'w, 'b>,
     ) -> RenderCommandResult {
-        pass.set_bind_group(I, &sprite_view_bind_group.value, &[view_uniform.offset]);
+        pass.set_bind_group_handle(I, &sprite_view_bind_group.value, &[view_uniform.offset]);
         RenderCommandResult::Success
     }
 }
 pub struct SetSpriteTextureBindGroup<const I: usize>;
 impl<P: PhaseItem, const I: usize> RenderCommand<P> for SetSpriteTextureBindGroup<I> {
-    type Param = (SRes<ImageBindGroups>, SRes<SpriteBatches>);
-    type ViewQuery = Read<ExtractedView>;
+    type Param = (SRes<SpriteBatches>,);
+    type ViewQuery = (Read<ExtractedView>, Read<SpriteImageBindGroup>);
     type ItemQuery = ();
 
-    fn render<'w>(
+    fn render<'w, 'b>(
         item: &P,
-        view: ROQueryItem<'w, '_, Self::ViewQuery>,
+        (view, sprite_image_bind_group): ROQueryItem<'w, '_, Self::ViewQuery>,
         _entity: Option<()>,
-        (image_bind_groups, batches): SystemParamItem<'w, '_, Self::Param>,
-        pass: &mut TrackedRenderPass<'w>,
+        (batches,): SystemParamItem<'w, '_, Self::Param>,
+        pass: &mut TrackedRenderPass<'w, 'b>,
     ) -> RenderCommandResult {
-        let image_bind_groups = image_bind_groups.into_inner();
-        let Some(batch) = batches.get(&(view.retained_view_entity, item.entity())) else {
+        let Some(_batch) = batches.get(&(view.retained_view_entity, item.entity())) else {
             return RenderCommandResult::Skip;
         };
 
-        pass.set_bind_group(
-            I,
-            image_bind_groups
-                .values
-                .get(&batch.image_handle_id)
-                .unwrap(),
-            &[],
-        );
+        pass.set_bind_group_handle(I, &sprite_image_bind_group.bind_group, &[]);
         RenderCommandResult::Success
     }
 }
@@ -898,12 +917,12 @@ impl<P: PhaseItem> RenderCommand<P> for DrawSpriteBatch {
     type ViewQuery = Read<ExtractedView>;
     type ItemQuery = ();
 
-    fn render<'w>(
+    fn render<'w, 'b>(
         item: &P,
         view: ROQueryItem<'w, '_, Self::ViewQuery>,
         _entity: Option<()>,
         (sprite_meta, batches): SystemParamItem<'w, '_, Self::Param>,
-        pass: &mut TrackedRenderPass<'w>,
+        pass: &mut TrackedRenderPass<'w, 'b>,
     ) -> RenderCommandResult {
         let sprite_meta = sprite_meta.into_inner();
         let Some(batch) = batches.get(&(view.retained_view_entity, item.entity())) else {

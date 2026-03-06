@@ -99,7 +99,7 @@ pub struct SpriteMaterialUniform {
 impl AsBindGroupShaderType<SpriteMaterialUniform> for SpriteMaterial {
     fn as_bind_group_shader_type(
         &self,
-        images: &RenderAssets<bevy_render::texture::GpuImage>,
+        images: &RenderAssets<robin_render::texture::GpuImage>,
     ) -> SpriteMaterialUniform {
         let Some(image) = images.get(self.image.id()) else {
             return SpriteMaterialUniform::default();
