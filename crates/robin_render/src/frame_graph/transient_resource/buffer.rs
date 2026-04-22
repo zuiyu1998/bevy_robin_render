@@ -41,6 +41,12 @@ pub enum TransientBufferDescriptor {
     Manual(ManualBufferDescriptor),
 }
 
+impl TransientBufferDescriptor {
+    pub fn get_desc(&self) -> wgpu::BufferDescriptor<'_> {
+        todo!()
+    }
+}
+
 impl From<TransientBufferDescriptor> for AnyTransientResourceDescriptor {
     fn from(value: TransientBufferDescriptor) -> Self {
         AnyTransientResourceDescriptor::Buffer(value)

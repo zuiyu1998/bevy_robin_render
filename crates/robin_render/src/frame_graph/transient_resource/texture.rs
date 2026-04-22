@@ -40,6 +40,12 @@ pub enum TransientTextureDescriptor {
     Manual(ManualTextureDescriptor),
 }
 
+impl TransientTextureDescriptor {
+    pub fn get_desc(&self) -> wgpu::TextureDescriptor<'_> {
+        todo!()
+    }
+}
+
 impl From<TransientTextureDescriptor> for AnyTransientResourceDescriptor {
     fn from(value: TransientTextureDescriptor) -> Self {
         AnyTransientResourceDescriptor::Texture(value)
