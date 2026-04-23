@@ -2,18 +2,12 @@ use bevy::{ecs::schedule::InternedScheduleLabel, platform::collections::HashMap,
 
 use crate::frame_graph::FrameGraph;
 
-#[derive(Resource)]
+#[derive(Resource, Default)]
 pub struct RenderGraph {
     pipelines: HashMap<InternedScheduleLabel, RenderPipeline>,
 }
 
 impl RenderGraph {
-    pub fn new() -> Self {
-        Self {
-            pipelines: HashMap::new(),
-        }
-    }
-
     pub fn update(&mut self, world: &mut World) {
         for pipeline in self.pipelines.values_mut() {
             for node in &mut pipeline.nodes {

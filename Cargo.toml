@@ -10,3 +10,7 @@ members = ["crates/robin_render", "."]
 bevy = { git = "https://github.com/bevyengine/bevy.git" }
 
 [dependencies]
+robin_render = { path = "crates/robin_render" }
+
+[dev-dependencies]
+bevy = { git = "https://github.com/bevyengine/bevy.git" }

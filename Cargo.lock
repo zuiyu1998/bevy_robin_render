@@ -1316,6 +1316,10 @@ dependencies = [
 [[package]]
 name = "bevy_robin_render"
 version = "0.1.0"
+dependencies = [
+ "bevy",
+ "robin_render",
+]
 
 [[package]]
 name = "bevy_scene"
