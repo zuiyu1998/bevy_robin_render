@@ -1,20 +1,26 @@
-use bevy::render::render_resource::{ComputePipeline, RenderPipeline};
+use bevy::render::render_resource::{
+    CachedPipelineState, ComputePipeline, Pipeline, PipelineCache, RenderPipeline,
+};
 
-#[derive(Debug, Clone)]
-pub enum Pipeline {
-    RenderPipeline(RenderPipeline),
-    ComputePipeline(ComputePipeline),
+pub trait GetPipelineContainer {
+    fn get_pipeline_container(&self) -> PipelineContainer;
 }
 
-impl Pipeline {
-    pub fn get_render_pipeline(&self) -> Option<&RenderPipeline> {
+pub trait PipelineExt {
+    fn get_render_pipeline(&self) -> Option<&RenderPipeline>;
+
+    fn get_compute_pipeline(&self) -> Option<&ComputePipeline>;
+}
+
+impl PipelineExt for Pipeline {
+    fn get_render_pipeline(&self) -> Option<&RenderPipeline> {
         match self {
             Pipeline::RenderPipeline(res) => Some(res),
             _ => None,
         }
     }
 
-    pub fn get_compute_pipeline(&self) -> Option<&ComputePipeline> {
+    fn get_compute_pipeline(&self) -> Option<&ComputePipeline> {
         match self {
             Pipeline::ComputePipeline(res) => Some(res),
             _ => None,
@@ -22,8 +28,26 @@ impl Pipeline {
     }
 }
 
-pub trait GetPipelineContainer {
-    fn get_pipeline_container(&self) -> PipelineContainer;
+impl GetPipelineContainer for PipelineCache {
+    fn get_pipeline_container(&self) -> PipelineContainer {
+        let mut container = PipelineContainer::default();
+        for pipeline in self.pipelines() {
+            match &pipeline.state {
+                CachedPipelineState::Ok(pipeline) => match pipeline {
+                    Pipeline::ComputePipeline(pipeline) => {
+                        container.push(Some(Pipeline::ComputePipeline(pipeline.clone())));
+                    }
+                    Pipeline::RenderPipeline(pipeline) => {
+                        container.push(Some(Pipeline::RenderPipeline(pipeline.clone())));
+                    }
+                },
+                _ => {
+                    container.push(None);
+                }
+            }
+        }
+        container
+    }
 }
 
 #[derive(Default)]

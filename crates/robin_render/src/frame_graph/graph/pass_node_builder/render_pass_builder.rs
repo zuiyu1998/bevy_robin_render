@@ -5,7 +5,7 @@ use wgpu::IndexFormat;
 use crate::frame_graph::{
     PassNodeBuilderExt, RenderPass, ResourceHandle, ResourceMaterial, ResourceRead, ResourceRef,
     ResourceWrite, TransientBuffer, TransientRenderPassColorAttachment, TransientResource,
-    TransientTextureViewHandle,
+    TransientTextureView, TransientTextureViewHandle,
 };
 
 use super::{PassBuilder, RenderPassExt};
@@ -53,14 +53,14 @@ impl PassNodeBuilderExt for RenderPassBuilder<'_, '_> {
     fn read_texture_handle(
         &mut self,
         texture_handle: &TransientTextureViewHandle,
-    ) -> crate::frame_graph::TransientTextureView {
+    ) -> TransientTextureView {
         self.pass_builder.read_texture_handle(texture_handle)
     }
 
     fn write_texture_handle(
         &mut self,
         texture_handle: &TransientTextureViewHandle,
-    ) -> crate::frame_graph::TransientTextureView {
+    ) -> TransientTextureView {
         self.pass_builder.write_texture_handle(texture_handle)
     }
 }
