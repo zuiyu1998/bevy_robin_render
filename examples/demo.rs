@@ -1,8 +1,8 @@
 use bevy::{
     anti_alias::AntiAliasPlugin, core_pipeline::CorePipelinePlugin,
     gizmos_render::GizmoRenderPlugin, gltf::GltfPlugin, pbr::PbrPlugin,
-    post_process::PostProcessPlugin, prelude::*, sprite_render::SpriteRenderPlugin,
-    ui_render::UiRenderPlugin,
+    post_process::PostProcessPlugin, prelude::*, render::RenderPlugin,
+    sprite_render::SpriteRenderPlugin, ui_render::UiRenderPlugin,
 };
 use bevy_robin_render::render::RobinRenderPlugin;
 
@@ -11,6 +11,7 @@ fn main() {
 
     let default_plugins = DefaultPlugins
         .build()
+        .disable::<RenderPlugin>()
         .disable::<CorePipelinePlugin>()
         .disable::<PostProcessPlugin>()
         .disable::<AntiAliasPlugin>()
@@ -20,7 +21,7 @@ fn main() {
         .disable::<GizmoRenderPlugin>()
         .disable::<GltfPlugin>();
 
-    app.add_plugins((default_plugins, RobinRenderPlugin));
+    app.add_plugins((default_plugins, RobinRenderPlugin::default()));
 
     app.add_systems(Startup, setup);
 

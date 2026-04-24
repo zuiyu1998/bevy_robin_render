@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use bevy::ecs::resource::Resource;
+use bevy_ecs::resource::Resource;
 
 use super::{AnyTransientResource, AnyTransientResourceDescriptor};
 

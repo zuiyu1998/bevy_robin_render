@@ -2,7 +2,7 @@ use super::{
     AnyTransientResource, AnyTransientResourceDescriptor, ArcAnyTransientResource,
     IntoArcAnyTransientResource, TransientResource, TransientResourceDescriptor,
 };
-use std::sync::Arc;
+use alloc::sync::Arc;
 use wgpu::{Extent3d, Texture, TextureDimension, TextureFormat, TextureUsages};
 
 impl IntoArcAnyTransientResource for TransientTexture {

@@ -9,7 +9,7 @@ mod resource_table;
 mod texture_view;
 mod transient_resource;
 
-use bevy::render::renderer::RenderDevice;
+use crate::renderer::RenderDevice;
 
 pub use graph::*;
 pub use index::*;

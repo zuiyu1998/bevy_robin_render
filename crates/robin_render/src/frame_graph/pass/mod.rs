@@ -4,7 +4,7 @@ use crate::frame_graph::{
     PipelineContainer, ResourceRef, ResourceTable, ResourceView, TransientResource,
     TransientTextureView, TransientTextureViewDescriptor,
 };
-use bevy::render::renderer::RenderDevice;
+use crate::renderer::RenderDevice;
 use wgpu::{CommandBuffer, CommandEncoder, CommandEncoderDescriptor, RenderPipeline};
 
 pub use render_pass::*;

@@ -1,4 +1,4 @@
-use bevy::render::render_resource::{
+use crate::render_resource::{
     CachedPipelineState, ComputePipeline, Pipeline, PipelineCache, RenderPipeline,
 };
 

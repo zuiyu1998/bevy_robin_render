@@ -1,6 +1,11 @@
-use bevy::{ecs::schedule::InternedScheduleLabel, platform::collections::HashMap, prelude::*};
+mod plugin;
+
+use bevy_ecs::{resource::Resource, schedule::InternedScheduleLabel, world::World};
+use bevy_platform::collections::HashMap;
 
 use crate::frame_graph::FrameGraph;
+
+pub use plugin::*;
 
 #[derive(Resource, Default)]
 pub struct RenderGraph {

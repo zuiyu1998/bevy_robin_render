@@ -9,6 +9,7 @@ mod set_vertex_buffer_parameter;
 use crate::frame_graph::{
     RenderPass, RenderPassCommand, ResourceRead, ResourceRef, TransientBuffer,
 };
+use core::ops::Range;
 use draw_indexed_parameter::*;
 use draw_parameter::*;
 use set_gpu_bind_group_parameter::*;
@@ -16,7 +17,6 @@ use set_index_buffer_parameter::*;
 use set_render_pipeline_parameter::*;
 use set_scissor_rect_parameter::*;
 use set_vertex_buffer_parameter::*;
-use std::ops::Range;
 use wgpu::IndexFormat;
 
 pub trait RenderPassExt {

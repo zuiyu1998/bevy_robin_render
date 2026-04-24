@@ -6,7 +6,8 @@ pub use buffer::*;
 pub use cache::*;
 pub use texture::*;
 
-use std::{fmt::Debug, sync::Arc};
+use alloc::sync::Arc;
+use core::fmt::Debug;
 
 #[derive(Clone)]
 pub enum VirtualResource {

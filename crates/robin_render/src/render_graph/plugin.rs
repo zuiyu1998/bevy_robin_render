@@ -1,22 +1,63 @@
-use std::fmt::{self, Display, Formatter};
+use core::fmt::{self, Display, Formatter};
 
-use bevy::{
-    camera::NormalizedRenderTarget,
-    core_pipeline::schedule::RootNonCameraView,
-    ecs::entity::{EntityHashMap, EntityHashSet},
+use bevy_app::{App, Plugin};
+use bevy_camera::{ClearColor, NormalizedRenderTarget};
+use bevy_derive::{Deref, DerefMut};
+use bevy_ecs::{
+    entity::{Entity, EntityHashMap, EntityHashSet},
     prelude::*,
-    render::{
-        camera::{ExtractedCamera, SortedCameras},
-        render_resource::*,
-        renderer::{RenderDevice, RenderQueue},
-        view::ExtractedWindows,
-    },
+    resource::Resource,
+    schedule::{InternedScheduleLabel, SystemSet},
+    system::{Res, ResMut},
+    world::World,
 };
+
+use bevy_reflect::Reflect;
 
 use crate::{
+    camera::{ExtractedCamera, SortedCameras},
     frame_graph::{FrameGraph, FrameGraphContext, GetPipelineContainer, TransientResourceCache},
     render_graph::RenderGraph,
+    render_resource::*,
+    renderer::RenderGraph as RenderGraphSchedule,
+    renderer::{RenderDevice, RenderQueue},
+    view::ExtractedWindows,
 };
+
+pub struct RenderGraphPlugin;
+
+impl Plugin for RenderGraphPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<FrameGraphs>()
+            .configure_sets(
+                RenderGraphSchedule,
+                (
+                    FrameGraphSystems::Update,
+                    FrameGraphSystems::Setup,
+                    FrameGraphSystems::Execute,
+                )
+                    .chain(),
+            )
+            .add_systems(
+                RenderGraphSchedule,
+                update_render_graph.in_set(FrameGraphSystems::Update),
+            )
+            .add_systems(
+                RenderGraphSchedule,
+                camera_driver.in_set(FrameGraphSystems::Setup),
+            );
+    }
+}
+
+/// A render-world marker component for a view that corresponds to neither a
+/// camera nor a camera-associated shadow map.
+///
+/// This is used for point light and spot light shadow maps, since these aren't
+/// associated with views.
+#[derive(Clone, Copy, Component, Debug, Reflect)]
+#[reflect(Clone, Component)]
+#[reflect(from_reflect = false)]
+pub struct RootNonCameraView(#[reflect(ignore)] pub InternedScheduleLabel);
 
 #[derive(Resource, Default, DerefMut, Deref)]
 pub struct FrameGraphs(EntityHashMap<FrameGraph>);

@@ -1,4 +1,4 @@
-use bevy::render::render_resource::{Buffer, BufferId, Texture, TextureId};
+use crate::render_resource::{Buffer, BufferId, Texture, TextureId};
 
 use crate::frame_graph::{
     FrameGraph, ResourceHandle, TransientBuffer, TransientBufferDescriptor, TransientResource,

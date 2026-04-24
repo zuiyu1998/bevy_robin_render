@@ -2,18 +2,20 @@ mod device_pass;
 mod pass_node_builder;
 mod resource_material;
 
-use bevy::render::renderer::RenderDevice;
 pub use device_pass::*;
 pub use pass_node_builder::*;
 pub use resource_material::*;
 
-use std::sync::Arc;
+use alloc::sync::Arc;
 use wgpu::CommandBuffer;
 
-use crate::frame_graph::{
-    Index, IntoArcAnyTransientResource, PassNode, PipelineContainer, ResourceBoard, ResourceHandle,
-    ResourceNode, ResourceTable, TransientResource, TransientResourceCache,
-    TransientResourceDescriptor, TypeEquals, VirtualResource,
+use crate::{
+    frame_graph::{
+        Index, IntoArcAnyTransientResource, PassNode, PipelineContainer, ResourceBoard,
+        ResourceHandle, ResourceNode, ResourceTable, TransientResource, TransientResourceCache,
+        TransientResourceDescriptor, TypeEquals, VirtualResource,
+    },
+    renderer::RenderDevice,
 };
 
 pub struct FrameGraphContext<'a> {
