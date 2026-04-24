@@ -4,7 +4,7 @@ use bevy::{
     post_process::PostProcessPlugin, prelude::*, render::RenderPlugin,
     sprite_render::SpriteRenderPlugin, ui_render::UiRenderPlugin,
 };
-use bevy_robin_render::render::RobinRenderPlugin;
+use bevy_robin_render::RobinPlugins;
 
 fn main() {
     let mut app = App::new();
@@ -21,7 +21,7 @@ fn main() {
         .disable::<GizmoRenderPlugin>()
         .disable::<GltfPlugin>();
 
-    app.add_plugins((default_plugins, RobinRenderPlugin::default()));
+    app.add_plugins((default_plugins, RobinPlugins));
 
     app.add_systems(Startup, setup);
 

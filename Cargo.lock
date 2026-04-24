@@ -1344,6 +1344,8 @@ name = "bevy_robin_render"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_app",
+ "robin_core_pipeline",
  "robin_render",
 ]
 
@@ -4483,6 +4485,16 @@ name = "renderdoc-sys"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "19b30a45b0cd0bcca8037f3d0dc3421eaf95327a17cad11964fb8179b4fc4832"
+
+[[package]]
+name = "robin_core_pipeline"
+version = "0.1.0"
+dependencies = [
+ "bevy_app",
+ "bevy_camera",
+ "bevy_ecs",
+ "robin_render",
+]
 
 [[package]]
 name = "robin_render"
