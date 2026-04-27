@@ -1,11 +1,13 @@
 use bevy_app::{App, Plugin};
 use bevy_camera::Camera2d;
-use bevy_ecs::{schedule::ScheduleLabel, system::ResMut};
+use bevy_ecs::{schedule::ScheduleLabel, world::World};
 use robin_render::{
     RenderApp, RenderStartup,
     camera::CameraRenderGraph,
-    render_graph::{RenderGraph, RenderPipeline},
+    render_graph::{RenderGraph, RenderPipeline, ViewNodeRunner},
 };
+
+use crate::upscaling::node::UpscalingNode;
 
 /// Schedule label for the Core 2D rendering pipeline.
 #[derive(ScheduleLabel, Debug, Clone, PartialEq, Eq, Hash, Default)]
@@ -27,8 +29,12 @@ impl Plugin for Core2dPlugin {
     }
 }
 
-pub fn init_render_pipeline(mut render_graph: ResMut<RenderGraph>) {
-    let pipeline = RenderPipeline::empty();
+pub fn init_render_pipeline(world: &mut World) {
+    let upscaling_node = ViewNodeRunner::new(UpscalingNode, world);
+    let mut render_graph = world.resource_mut::<RenderGraph>();
 
+    let mut pipeline = RenderPipeline::empty();
+
+    pipeline.push(upscaling_node);
     render_graph.add(Core2d, pipeline);
 }

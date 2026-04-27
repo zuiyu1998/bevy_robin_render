@@ -379,7 +379,6 @@ impl Plugin for RobinRenderPlugin {
             GpuReadbackPlugin::default(),
             OcclusionCullingPlugin,
             SparseBufferPlugin,
-            RenderGraphPlugin,
             #[cfg(feature = "tracing-tracy")]
             diagnostic::RenderDiagnosticsPlugin,
         ));
@@ -436,6 +435,8 @@ impl Plugin for RobinRenderPlugin {
                 ),
             );
         }
+
+        app.add_plugins(RenderGraphPlugin);
     }
 
     fn ready(&self, app: &App) -> bool {

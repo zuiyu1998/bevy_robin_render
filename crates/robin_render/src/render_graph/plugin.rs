@@ -18,7 +18,7 @@ use crate::{
     RenderApp,
     camera::{ExtractedCamera, SortedCameras},
     frame_graph::{FrameGraph, FrameGraphContext, GetPipelineContainer, TransientResourceCache},
-    render_graph::RenderGraph,
+    render_graph::{RenderGraph, RenderGraphContext},
     render_resource::*,
     renderer::{RenderDevice, RenderGraph as RenderGraphSchedule, RenderQueue},
     view::ExtractedWindows,
@@ -42,10 +42,7 @@ impl Plugin for RenderGraphPlugin {
                 )
                     .chain(),
             )
-            .add_systems(
-                RenderGraphSchedule,
-                update_render_graph.in_set(FrameGraphSystems::Update),
-            )
+            .add_systems(RenderGraphSchedule, update_render_graph)
             .add_systems(
                 RenderGraphSchedule,
                 camera_driver.in_set(FrameGraphSystems::Setup),
@@ -176,7 +173,13 @@ pub fn camera_driver(world: &mut World) {
             let render_graph = world.resource::<RenderGraph>();
 
             let frame_graph = frame_graphs.get_or_create(view_entity);
-            if let Err(e) = render_graph.run(&schedule, frame_graph, world) {
+
+            let mut graph = RenderGraphContext {
+                frame_graph,
+                view_entity: Some(view_entity),
+            };
+
+            if let Err(e) = render_graph.run(&schedule, &mut graph, world) {
                 bevy_log::error!("Render pipeline run error: {}", e);
             }
         }

@@ -43,6 +43,21 @@ pub struct BlitPipeline {
     pub fragment_shader: Handle<Shader>,
 }
 
+impl BlitPipeline {
+    pub fn create_bind_group(
+        &self,
+        render_device: &RenderDevice,
+        src_texture: &TextureView,
+        pipeline_cache: &PipelineCache,
+    ) -> BindGroup {
+        render_device.create_bind_group(
+            None,
+            &pipeline_cache.get_bind_group_layout(&self.layout),
+            &BindGroupEntries::sequential((src_texture, &self.sampler)),
+        )
+    }
+}
+
 pub fn init_blit_pipeline(
     mut commands: Commands,
     render_device: Res<RenderDevice>,

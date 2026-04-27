@@ -2,12 +2,13 @@ use bevy_camera::{CameraOutputMode, ClearColor, ClearColorConfig};
 use bevy_ecs::{query::QueryItem, world::World};
 use robin_render::{
     camera::ExtractedCamera,
-    frame_graph::FrameGraph,
-    render_graph::{NodeRunError, ViewNode},
+    render_graph::{NodeRunError, RenderGraphContext, ViewNode},
+    render_resource::PipelineCache,
+    renderer::RenderDevice,
     view::ViewTarget,
 };
 
-use crate::upscaling::ViewUpscalingPipeline;
+use crate::{blit::BlitPipeline, upscaling::ViewUpscalingPipeline};
 
 pub struct UpscalingNode;
 
@@ -20,11 +21,14 @@ impl ViewNode for UpscalingNode {
 
     fn run<'w>(
         &self,
-        frame_graph: &mut FrameGraph,
+        graph: &mut RenderGraphContext,
         (target, upscaling_target, camera): QueryItem<Self::ViewQuery>,
         world: &'w World,
     ) -> Result<(), NodeRunError> {
         let clear_color_global = world.resource::<ClearColor>();
+        let pipeline_cache = world.resource::<PipelineCache>();
+        let blit_pipeline = world.resource::<BlitPipeline>();
+        let render_device = world.resource::<RenderDevice>();
 
         let clear_color = if let Some(camera) = camera {
             match camera.output_mode {
@@ -44,9 +48,13 @@ impl ViewNode for UpscalingNode {
         let converted_clear_color = clear_color.map(Into::into);
 
         let out_attachment =
-            target.create_out_texture_color_attachment(converted_clear_color, frame_graph);
+            target.create_out_texture_color_attachment(converted_clear_color, graph.frame_graph);
 
-        let mut pass_builder = frame_graph.create_pass_builder("upscaling");
+        let mut pass_builder = graph.frame_graph.create_pass_builder("upscaling");
+
+        let main_texture_view = target.main_texture_view();
+        let bind_group =
+            blit_pipeline.create_bind_group(render_device, main_texture_view, pipeline_cache);
 
         let mut render_pass_builder = pass_builder.create_render_pass_builder("upscaling_node");
 
@@ -61,7 +69,7 @@ impl ViewNode for UpscalingNode {
         }
 
         render_pass_builder.set_render_pipeline(upscaling_target.0.id());
-        // render_pass_builder.set_bind_group(0, bind_group, &[]);
+        render_pass_builder.set_gpu_bind_group(0, &bind_group, &[]);
         render_pass_builder.draw(0..3, 0..1);
 
         Ok(())

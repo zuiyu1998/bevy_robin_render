@@ -1,10 +1,11 @@
 mod plugin;
 
 use bevy_ecs::{
-    query::{QueryItem, ReadOnlyQueryData},
+    entity::Entity,
+    query::{QueryItem, QueryState, ReadOnlyQueryData},
     resource::Resource,
     schedule::{InternedScheduleLabel, ScheduleLabel},
-    world::World,
+    world::{FromWorld, World},
 };
 use bevy_platform::collections::HashMap;
 use thiserror::Error;
@@ -40,12 +41,12 @@ impl RenderGraph {
     pub fn run(
         &self,
         pipeline: &InternedScheduleLabel,
-        frame_graph: &mut FrameGraph,
+        graph: &mut RenderGraphContext,
         world: &World,
     ) -> Result<(), NodeRunError> {
         if let Some(render_pipeline) = self.pipelines.get(pipeline) {
             for node in render_pipeline.nodes.iter() {
-                node.run(frame_graph, world)?;
+                node.run(graph, world)?;
             }
         }
         Ok(())
@@ -60,11 +61,26 @@ impl RenderPipeline {
     pub fn empty() -> Self {
         RenderPipeline { nodes: vec![] }
     }
+
+    pub fn push(&mut self, node: impl Node) {
+        self.nodes.push(Box::new(node));
+    }
+}
+
+pub struct RenderGraphContext<'a> {
+    pub frame_graph: &'a mut FrameGraph,
+    view_entity: Option<Entity>,
+}
+
+impl<'a> RenderGraphContext<'a> {
+    fn view_entity(&self) -> Entity {
+        self.view_entity.unwrap()
+    }
 }
 
 pub trait Node: 'static + Send + Sync {
     fn update(&mut self, _world: &mut World) {}
-    fn run(&self, frame_graph: &mut FrameGraph, world: &World) -> Result<(), NodeRunError>;
+    fn run(&self, graph: &mut RenderGraphContext, world: &World) -> Result<(), NodeRunError>;
 }
 
 pub trait ViewNode {
@@ -74,8 +90,51 @@ pub trait ViewNode {
 
     fn run<'w>(
         &self,
-        frame_graph: &mut FrameGraph,
+        graph: &mut RenderGraphContext,
         view_query: QueryItem<'w, '_, Self::ViewQuery>,
         world: &'w World,
     ) -> Result<(), NodeRunError>;
+}
+
+pub struct ViewNodeRunner<N: ViewNode> {
+    view_query: QueryState<N::ViewQuery>,
+    node: N,
+}
+
+impl<N: ViewNode> ViewNodeRunner<N> {
+    pub fn new(node: N, world: &mut World) -> Self {
+        Self {
+            view_query: world.query_filtered(),
+            node,
+        }
+    }
+}
+
+impl<N: ViewNode + FromWorld> FromWorld for ViewNodeRunner<N> {
+    fn from_world(world: &mut World) -> Self {
+        Self::new(N::from_world(world), world)
+    }
+}
+
+impl<T> Node for ViewNodeRunner<T>
+where
+    T: ViewNode + Send + Sync + 'static,
+{
+    fn update(&mut self, world: &mut World) {
+        self.view_query.update_archetypes(world);
+        self.node.update(world);
+    }
+
+    fn run<'w>(
+        &self,
+        graph: &mut RenderGraphContext,
+        world: &'w World,
+    ) -> Result<(), NodeRunError> {
+        let Ok(view) = self.view_query.get_manual(world, graph.view_entity()) else {
+            return Ok(());
+        };
+
+        ViewNode::run(&self.node, graph, view, world)?;
+        Ok(())
+    }
 }
