@@ -6,7 +6,10 @@ edition = "2024"
 [dependencies]
 bevy_app = { workspace = true }
 bevy_ecs = { workspace = true }
+bevy_asset = { workspace = true }
 bevy_camera = { workspace = true }
+bevy_shader = { workspace = true }
+bevy_utils = { workspace = true }
 
 robin_render = { path = "../robin_render"}
 
