@@ -1,13 +1,7 @@
-use bevy_ecs::world::World;
-use robin_render::{
-    frame_graph::FrameGraph,
-    render_graph::{Node, NodeRunError},
-};
+use bevy_app::{App, Plugin};
 
-pub struct Upscaling {}
+pub struct UpscalingPlugin;
 
-impl Node for Upscaling {
-    fn run(&self, _frame_graph: &mut FrameGraph, _world: &World) -> Result<(), NodeRunError> {
-        todo!()
-    }
+impl Plugin for UpscalingPlugin {
+    fn build(&self, _app: &mut App) {}
 }
