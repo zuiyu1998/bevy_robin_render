@@ -1,7 +1,7 @@
 mod plugin;
 
 use bevy_ecs::{
-    query::ReadOnlyQueryData,
+    query::{QueryItem, ReadOnlyQueryData},
     resource::Resource,
     schedule::{InternedScheduleLabel, ScheduleLabel},
     world::World,
@@ -72,5 +72,10 @@ pub trait ViewNode {
 
     fn update(&mut self, _world: &mut World) {}
 
-    fn run<'w>(&self, frame_graph: &mut FrameGraph, world: &'w World) -> Result<(), NodeRunError>;
+    fn run<'w>(
+        &self,
+        frame_graph: &mut FrameGraph,
+        view_query: QueryItem<'w, '_, Self::ViewQuery>,
+        world: &'w World,
+    ) -> Result<(), NodeRunError>;
 }

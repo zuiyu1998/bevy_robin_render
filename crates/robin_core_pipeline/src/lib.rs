@@ -5,13 +5,14 @@ pub mod upscaling;
 
 use bevy_app::{App, Plugin};
 
-use crate::{blit::BlitPlugin, core_2d::Core2dPlugin};
+use crate::{blit::BlitPlugin, core_2d::Core2dPlugin, upscaling::UpscalingPlugin};
 
 #[derive(Default)]
 pub struct CorePipelinePlugin;
 
 impl Plugin for CorePipelinePlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(Core2dPlugin).add_plugins(BlitPlugin);
+        app.add_plugins(Core2dPlugin)
+            .add_plugins((BlitPlugin, UpscalingPlugin));
     }
 }

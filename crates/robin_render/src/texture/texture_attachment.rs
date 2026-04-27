@@ -1,7 +1,11 @@
 use super::CachedTexture;
-use crate::render_resource::{TextureFormat, TextureView};
+use crate::{
+    frame_graph::{FrameGraph, TransientRenderPassColorAttachment, TransientTextureView},
+    render_resource::{TextureFormat, TextureView},
+};
 use alloc::sync::Arc;
 use bevy_color::LinearRgba;
+use core::ops::Deref;
 use core::sync::atomic::{AtomicBool, Ordering};
 use wgpu::{
     Color as WgpuColor, LoadOp, Operations, RenderPassColorAttachment,
@@ -158,6 +162,27 @@ impl OutputColorAttachment {
 
         RenderPassColorAttachment {
             view: &self.view,
+            depth_slice: None,
+            resolve_target: None,
+            ops: Operations {
+                load: match (clear_color, first_call) {
+                    (Some(clear_color), true) => LoadOp::Clear(clear_color.into()),
+                    (None, _) | (Some(_), false) => LoadOp::Load,
+                },
+                store: StoreOp::Store,
+            },
+        }
+    }
+
+    pub fn create_attachment(
+        &self,
+        clear_color: Option<LinearRgba>,
+        _frame_graph: &mut FrameGraph,
+    ) -> TransientRenderPassColorAttachment {
+        let first_call = self.is_first_call.fetch_and(false, Ordering::SeqCst);
+
+        TransientRenderPassColorAttachment {
+            view: TransientTextureView::TextureView(self.view.deref().clone()),
             depth_slice: None,
             resolve_target: None,
             ops: Operations {

@@ -13,6 +13,7 @@ use crate::{
     GpuResourceAppExt, Render, RenderApp, RenderSystems,
     camera::{ExtractedCamera, MipBias, NormalizedRenderTargetExt as _, TemporalJitter},
     extract_component::ExtractComponentPlugin,
+    frame_graph::{FrameGraph, TransientRenderPassColorAttachment},
     occlusion_culling::OcclusionCulling,
     render_asset::RenderAssets,
     render_phase::ViewRangefinder3d,
@@ -910,6 +911,14 @@ impl ViewTarget {
         clear_color: Option<LinearRgba>,
     ) -> RenderPassColorAttachment<'_> {
         self.out_texture.get_attachment(clear_color)
+    }
+
+    pub fn create_out_texture_color_attachment(
+        &self,
+        clear_color: Option<LinearRgba>,
+        frame_graph: &mut FrameGraph,
+    ) -> TransientRenderPassColorAttachment {
+        self.out_texture.create_attachment(clear_color, frame_graph)
     }
 
     /// Whether the final texture this view will render to needs to be presented.
